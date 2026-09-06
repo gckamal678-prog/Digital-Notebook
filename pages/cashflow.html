@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Income, Cashflow & Party Ledger - Digital Notebook</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Firebase App (compat) & Realtime Database SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -41,44 +38,65 @@
 <body class="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-2 md:p-6 pb-28 transition-colors duration-300 w-full m-0 min-h-screen flex flex-col justify-between">
 
 <div class="space-y-4 w-full flex-1 max-w-5xl mx-auto">
-    <!-- Header Section -->
+    <!-- Header Section with Corrected Global PDF Filter -->
     <div class="flex flex-col md:flex-row justify-between items-center bg-white dark:bg-slate-900 p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 gap-4">
         <h1 class="text-base md:text-xl font-bold tracking-wider text-slate-900 dark:text-white flex items-center gap-2.5">
             <span class="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-emerald-500">📊</span> 
-            <span>Cashflow & Ledger</span>
+            <span id="profile-org-name">Transaction & Ledger</span>
         </h1>
         
         <div class="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
-            <!-- Date Range Filter & Print PDF in one line -->
-            <div class="flex flex-row items-center gap-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 rounded-xl text-xs">
-                <i class="fa-solid fa-calendar text-slate-400"></i>
-                <input type="date" id="filter-from-date" onchange="applyGlobalFilters()" class="bg-transparent text-slate-900 dark:text-white outline-none">
-                <span class="text-slate-400">-</span>
-                <input type="date" id="filter-to-date" onchange="applyGlobalFilters()" class="bg-transparent text-slate-900 dark:text-white outline-none">
-                <button onclick="clearDateFilter()" class="text-slate-400 hover:text-rose-500 ml-1"><i class="fa-solid fa-xmark"></i></button>
-                <button type="button" onclick="printAllPDF()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-2.5 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1 ml-2">
-                    <i class="fa-solid fa-file-pdf text-rose-500"></i> PDF
+            <!-- Global PDF & Date Filter Container -->
+            <div class="pdf-filter-container bg-slate-50 dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-2 flex-wrap">
+                <span class="text-[11px] font-semibold text-slate-400">Filter:</span>
+                <input type="date" id="start-date" class="date-input border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white px-2 py-1 rounded-lg text-xs outline-none"> 
+                <span class="text-slate-400">To</span> 
+                <input type="date" id="end-date" class="date-input border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white px-2 py-1 rounded-lg text-xs outline-none">
+
+                <select id="transaction-type-filter" class="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white px-2 py-1 rounded-lg text-xs outline-none">
+                    <option value="all">All</option>
+                    <option value="Receivable">लिने (Receivable)</option>
+                    <option value="Expense">खर्च (Expense)</option>
+                    <option value="Payable">दिने (Payable)</option>
+                    <option value="Savings">बचत (Savings)</option>
+                    <option value="Income">आम्दानी </option>
+                </select>
+
+                <button type="button" id="generate-pdf-btn" class="bg-rose-500 hover:bg-rose-600 text-white border-none px-3 py-1 rounded-lg cursor-pointer text-xs font-semibold transition flex items-center gap-1">
+                    <i class="fa-solid fa-file-pdf"></i> PDF
                 </button>
             </div>
         </div>
     </div>
 
+    <!-- Hidden Profile elements for PDF data mapping -->
+    <div class="hidden">
+        <img id="profile-avatar" src="" alt="Avatar">
+        <span id="footer-address">अप्लब्ध छैन</span>
+        <span id="footer-phone">अप्लब्ध छैन</span>
+        <span id="footer-email">अप्लब्ध छैन</span>
+    </div>
+
     <!-- Advanced Summary Cards -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
         <div class="bg-emerald-50 dark:bg-emerald-950/40 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-900/50">
             <p class="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold uppercase tracking-wider">Total Income</p>
             <h2 id="summary-income" class="text-lg md:text-xl font-extrabold text-emerald-800 dark:text-emerald-200 mt-1">Rs 0</h2>
         </div>
         <div class="bg-amber-50 dark:bg-amber-950/40 p-4 rounded-2xl border border-amber-200 dark:border-amber-900/50">
-            <p class="text-[11px] text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider">Total Cashflow</p>
+            <p class="text-[11px] text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider">Total Saving</p>
             <h2 id="summary-cashflow" class="text-lg md:text-xl font-extrabold text-amber-800 dark:text-amber-200 mt-1">Rs 0</h2>
         </div>
+        <div class="bg-blue-50 dark:bg-blue-950/40 p-4 rounded-2xl border border-blue-200 dark:border-blue-900/50">
+            <p class="text-[11px] text-blue-700 dark:text-blue-400 font-bold uppercase tracking-wider">Total Expense (खर्च)</p>
+            <h2 id="summary-expense" class="text-lg md:text-xl font-extrabold text-blue-800 dark:text-blue-200 mt-1">Rs 0</h2>
+        </div>
         <div class="bg-rose-50 dark:bg-rose-950/40 p-4 rounded-2xl border border-rose-200 dark:border-rose-900/50">
-            <p class="text-[11px] text-rose-700 dark:text-rose-400 font-bold uppercase tracking-wider">Receivable (To Take)</p>
+            <p class="text-[11px] text-rose-700 dark:text-rose-400 font-bold uppercase tracking-wider">Receivable (लिनु)</p>
             <h2 id="summary-receivable" class="text-lg md:text-xl font-extrabold text-rose-800 dark:text-rose-200 mt-1">Rs 0</h2>
         </div>
         <div class="bg-orange-50 dark:bg-orange-950/40 p-4 rounded-2xl border border-orange-200 dark:border-orange-900/50">
-            <p class="text-[11px] text-orange-700 dark:text-orange-400 font-bold uppercase tracking-wider">Payable (To Give)</p>
+            <p class="text-[11px] text-orange-700 dark:text-orange-400 font-bold uppercase tracking-wider">Payable (दिनु)</p>
             <h2 id="summary-payable" class="text-lg md:text-xl font-extrabold text-orange-800 dark:text-orange-200 mt-1">Rs 0</h2>
         </div>
     </div>
@@ -108,8 +126,8 @@
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-400 mb-1">Type</label>
                         <select id="txn-type" onchange="handleTypeChange()" class="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="Receivable">Receivable (To Take)</option>
-                            <option value="Payable">Payable (To Give)</option>
+                            <option value="Receivable">Receivable (लिनु)</option>
+                            <option value="Payable">Payable (दिनु)</option>
                             <option value="Expense">Expense (खर्च)</option>
                         </select>
                     </div>
@@ -305,8 +323,11 @@
     </div>
 </div>
 
-<script>
-    // Firebase Configuration Initialization
+<!-- Firebase SDKs -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getDatabase, ref, set, onValue, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyDDY_v7RHnkCTI6uyV4DNDjqoaIBGweg8c",
       authDomain: "digital-a2552.firebaseapp.com",
@@ -316,9 +337,24 @@
       appId: "1:218135618179:web:821b76920d3e5669ac31b6"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
+    window.db = db;
+    window.dbRef = ref;
+    window.dbSet = set;
+    window.dbPush = push;
+    window.dbRemove = remove;
+    window.dbUpdate = update;
+    window.dbOnValue = onValue;
+
+    // Trigger initial data load check
+    if(window.initFirebaseSync) {
+        window.initFirebaseSync();
+    }
+</script>
+
+<script>
     let transactions = [];
     let incomes = [];
     let savings = [];
@@ -328,17 +364,128 @@
     document.getElementById('income-date').valueAsDate = new Date();
     document.getElementById('savings-date').valueAsDate = new Date();
 
-    // Fetch data from Firebase in Real-time (Auto Sync & Reload)
-    db.ref('digital_notebook').on('value', (snapshot) => {
-        const data = snapshot.val() || {};
-        transactions = data.transactions ? Object.values(data.transactions) : [];
-        incomes = data.incomes ? Object.values(data.incomes) : [];
-        savings = data.savings ? Object.values(data.savings) : [];
-        refreshAll();
+    function initFirebaseSync() {
+        // Listen to Transactions
+        window.dbOnValue(window.dbRef(window.db, 'my_transactions'), (snapshot) => {
+            const data = snapshot.val();
+            transactions = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
+            refreshAll();
+            if(activePartyName) renderModalLedgerContent();
+        });
+
+        // Listen to Incomes
+        window.dbOnValue(window.dbRef(window.db, 'my_incomes'), (snapshot) => {
+            const data = snapshot.val();
+            incomes = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
+            refreshAll();
+        });
+
+        // Listen to Cashflow / Savings
+        window.dbOnValue(window.dbRef(window.db, 'my_cashflow'), (snapshot) => {
+            const data = snapshot.val();
+            savings = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
+            refreshAll();
+        });
+    }
+
+    window.initFirebaseSync = initFirebaseSync;
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const savedProfile = localStorage.getItem('userProfile');
+        if (savedProfile) {
+            const profile = JSON.parse(savedProfile);
+            
+            if(profile.name) {
+                const orgNameEl = document.getElementById('profile-org-name');
+                if(orgNameEl) orgNameEl.textContent = profile.name;
+            }
+            
+            const addrEl = document.getElementById('footer-address');
+            if(addrEl) addrEl.textContent = profile.address || 'उपलब्ध छैन';
+            
+            const phoneEl = document.getElementById('footer-phone');
+            if(phoneEl) phoneEl.textContent = profile.phone || 'उपलब्ध छैन';
+            
+            const emailEl = document.getElementById('footer-email');
+            if(emailEl) emailEl.textContent = profile.email || 'उपलब्ध छैन';
+            
+            if (profile.photo) {
+                const avatarImg = document.getElementById('profile-avatar');
+                if(avatarImg) {
+                    avatarImg.src = profile.photo;
+                }
+            }
+        }
     });
 
+    document.getElementById('generate-pdf-btn').addEventListener('click', () => {
+        const selectedType = document.getElementById('transaction-type-filter').value;
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+
+        const filteredData = transactions.filter(item => {
+            const matchesType = (selectedType === 'all') || (item.type === selectedType);
+            const matchesDate = (!startDate || item.date >= startDate) && (!endDate || item.date <= endDate);
+            return matchesType && matchesDate;
+        });
+
+        generatePDFReport(filteredData, selectedType);
+    });
+
+    function generatePDFReport(data, type) {
+        const printWindow = window.open('', '_blank');
+        
+        let orgName = document.getElementById('profile-org-name')?.textContent || 'Digital Notebook';
+        let address = document.getElementById('footer-address')?.textContent || '-';
+        let phone = document.getElementById('footer-phone')?.textContent || '-';
+        let email = document.getElementById('footer-email')?.textContent || '-';
+        let avatarSrc = document.getElementById('profile-avatar')?.src || '';
+
+        let html = `<html><head><title>Financial Report</title><style>
+            body { font-family: sans-serif; padding: 20px; color: #0f172a; position: relative; }
+            .pdf-page-container { position: relative; width: 100%; background: #fff; padding: 10px; }
+            .pdf-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 28pt; font-weight: bold; color: #94a3b8; opacity: 0.12; z-index: 0; pointer-events: none; text-align: center; width: 100%; white-space: nowrap; }
+            .pdf-header { text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; position: relative; z-index: 1; min-height: 60px; }
+            .pdf-footer { margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 15px; text-align: center; font-size: 9.5pt; color: #64748b; z-index: 1; position: relative; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px; position: relative; z-index: 1; }
+            th, td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; font-size: 11pt; }
+            th { background: #f1f5f9; }
+        </style></head><body>`;
+
+        html += `<div class="pdf-page-container">`;
+        html += `<div class="pdf-watermark">Digital Notebook Kamal GC</div>`;
+
+        html += `<div class="pdf-header">`;
+        if (avatarSrc && avatarSrc !== window.location.href) {
+            html += `<img src="${avatarSrc}" alt="Avatar" style="position: absolute; left: 10px; top: 0; width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #3b82f6;">`;
+        }
+        html += `<h1 style="margin: 0; font-size: 20pt; color: #0f172a;">${orgName}</h1>`;
+        html += `<p style="margin: 5px 0 0 0; font-size: 11pt; color: #64748b;">डिजिटल वित्तीय रिपोर्ट (${type})</p>`;
+        html += `</div>`;
+
+        html += `<table><tr><th>Date</th><th>Party / Name</th><th>Type</th><th>Note</th><th>Amount (Rs)</th></tr>`;
+        let totalAmount = 0;
+        data.forEach(item => {
+            totalAmount += (item.amount || 0);
+            html += `<tr><td>${item.date}</td><td>${item.party || '-'}</td><td>${item.type}</td><td>${item.note || '-'}</td><td>${item.amount}</td></tr>`;
+        });
+        html += `</table>`;
+        html += `<p style="font-weight: bold; text-align: right; z-index: 1; position: relative;">Total: Rs ${totalAmount.toLocaleString()}</p>`;
+
+        html += `<div class="pdf-footer">`;
+        html += `<p style="margin: 3px 0;">ठेगाना: ${address} | फोन नम्बर: ${phone}</p>`;
+        html += `<p style="margin: 3px 0;">इमेल: ${email}</p>`;
+        html += `</div>`;
+
+        html += `</div></body></html>`;
+
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.print();
+        showToast("PDF generated successfully!");
+    }
+
     function showToast(message, type = 'success') {
-        // Domain / standard toast alerts active/inactive handle
         const container = document.getElementById('toast-container');
         const toast = document.createElement('div');
         toast.className = `bg-slate-900 text-white border border-slate-800 px-4 py-2.5 rounded-xl text-xs shadow-xl flex items-center gap-2 transition-all duration-300 transform translate-y-[-10px] opacity-0 pointer-events-auto`;
@@ -400,10 +547,15 @@
         document.getElementById('savings-total-calc').value = total > 0 ? `Rs ${total.toFixed(2)}` : '';
     }
 
+    function formatPartyName(name) {
+        if(!name) return '';
+        return name.trim().replace(/\s+/g, ' ');
+    }
+
     function saveTransaction(e) {
         e.preventDefault();
         const date = document.getElementById('txn-date').value;
-        const party = document.getElementById('txn-party').value.trim();
+        const party = formatPartyName(document.getElementById('txn-party').value);
         const type = document.getElementById('txn-type').value;
         const npr = parseFloat(document.getElementById('txn-amount-npr').value) || 0;
         const inr = parseFloat(document.getElementById('txn-amount-inr').value) || 0;
@@ -419,16 +571,17 @@
         const note = document.getElementById('txn-note').value;
         const index = document.getElementById('edit-txn-index').value;
 
-        const txnData = { id: index !== "" ? transactions[index].id : 'txn_' + Date.now(), date, party, type, npr, inr, principal, rate, period, amount: totalAmount, note };
+        const txnData = { date, party, type, npr, inr, principal, rate, period, amount: totalAmount, note };
 
         if(index === "") {
-            db.ref('digital_notebook/transactions/' + txnData.id).set(txnData);
+            transactions.push(txnData);
             showToast("Transaction saved successfully!");
         } else {
-            db.ref('digital_notebook/transactions/' + txnData.id).set(txnData);
+            transactions[index] = txnData;
             showToast("Transaction updated successfully!");
         }
 
+        saveData();
         resetTxnForm();
         if(activePartyName) renderModalLedgerContent();
     }
@@ -458,10 +611,8 @@
 
     function deleteTransaction(index) {
         if(confirm("Are you sure you want to delete this transaction?")) {
-            const t = transactions[index];
-            if(t && t.id) {
-                db.ref('digital_notebook/transactions/' + t.id).remove();
-            }
+            transactions.splice(index, 1);
+            saveData();
             if(activePartyName) renderModalLedgerContent();
             showToast("Transaction deleted successfully!");
         }
@@ -476,16 +627,15 @@
         const date = document.getElementById('income-date').value;
         const index = document.getElementById('edit-income-index').value;
 
-        const incData = { id: index !== "" ? incomes[index].id : 'inc_' + Date.now(), name, npr, inr, amount, date };
-
         if(index === "") {
-            db.ref('digital_notebook/incomes/' + incData.id).set(incData);
+            incomes.push({ name, npr, inr, amount, date });
             showToast("Income added successfully!");
         } else {
-            db.ref('digital_notebook/incomes/' + incData.id).set(incData);
+            incomes[index] = { name, npr, inr, amount, date };
             showToast("Income updated successfully!");
         }
 
+        saveData();
         resetIncomeForm();
     }
 
@@ -512,10 +662,8 @@
 
     function deleteIncome(index) {
         if(confirm("Are you sure you want to delete this income?")) {
-            const i = incomes[index];
-            if(i && i.id) {
-                db.ref('digital_notebook/incomes/' + i.id).remove();
-            }
+            incomes.splice(index, 1);
+            saveData();
             showToast("Income deleted successfully!");
         }
     }
@@ -530,16 +678,15 @@
         const date = document.getElementById('savings-date').value;
         const index = document.getElementById('edit-savings-index').value;
 
-        const savData = { id: index !== "" ? savings[index].id : 'sav_' + Date.now(), title, category, npr, inr, amount, date };
-
         if(index === "") {
-            db.ref('digital_notebook/savings/' + savData.id).set(savData);
+            savings.push({ title, category, npr, inr, amount, date });
             showToast("Cashflow added successfully!");
         } else {
-            db.ref('digital_notebook/savings/' + savData.id).set(savData);
+            savings[index] = { title, category, npr, inr, amount, date };
             showToast("Cashflow updated successfully!");
         }
 
+        saveData();
         resetSavingsForm();
     }
 
@@ -567,12 +714,21 @@
 
     function deleteSavings(index) {
         if(confirm("Are you sure you want to delete this cashflow?")) {
-            const s = savings[index];
-            if(s && s.id) {
-                db.ref('digital_notebook/savings/' + s.id).remove();
-            }
+            savings.splice(index, 1);
+            saveData();
             showToast("Cashflow deleted successfully!");
         }
+    }
+
+    function saveData() {
+        if (window.db && window.dbSet) {
+            window.dbSet(window.dbRef(window.db, 'my_transactions'), transactions);
+            window.dbSet(window.dbRef(window.db, 'my_incomes'), incomes);
+            window.dbSet(window.dbRef(window.db, 'my_cashflow'), savings);
+        }
+        localStorage.setItem('my_transactions', JSON.stringify(transactions));
+        localStorage.setItem('my_incomes', JSON.stringify(incomes));
+        localStorage.setItem('my_cashflow', JSON.stringify(savings));
     }
 
     function resetTxnForm() {
@@ -585,19 +741,9 @@
         handleTypeChange();
     }
 
-    function applyGlobalFilters() {
-        refreshAll();
-    }
-
-    function clearDateFilter() {
-        document.getElementById('filter-from-date').value = '';
-        document.getElementById('filter-to-date').value = '';
-        refreshAll();
-    }
-
     function getDateFilteredData(data) {
-        const fromDate = document.getElementById('filter-from-date').value;
-        const toDate = document.getElementById('filter-to-date').value;
+        const fromDate = document.getElementById('start-date').value;
+        const toDate = document.getElementById('end-date').value;
         return data.filter(item => {
             if (fromDate && item.date < fromDate) return false;
             if (toDate && item.date > toDate) return false;
@@ -619,10 +765,12 @@
 
         let receivable = 0;
         let payable = 0;
+        let expense = 0;
 
         filteredTxns.forEach(t => {
             if(t.type === 'Receivable') receivable += t.amount;
-            else if(t.type === 'Payable' || t.type === 'Expense') payable += t.amount;
+            else if(t.type === 'Payable') payable += t.amount;
+            else if(t.type === 'Expense') expense += t.amount;
         });
 
         let totalIncome = filteredIncomes.reduce((sum, i) => sum + i.amount, 0);
@@ -630,6 +778,7 @@
 
         document.getElementById('summary-income').innerText = 'Rs ' + totalIncome.toLocaleString();
         document.getElementById('summary-cashflow').innerText = 'Rs ' + totalCashflow.toLocaleString();
+        document.getElementById('summary-expense').innerText = 'Rs ' + expense.toLocaleString();
         document.getElementById('summary-receivable').innerText = 'Rs ' + receivable.toLocaleString();
         document.getElementById('summary-payable').innerText = 'Rs ' + payable.toLocaleString();
     }
@@ -641,23 +790,31 @@
 
         const partyMap = {};
         transactions.forEach((t) => {
-            if(!partyMap[t.party]) partyMap[t.party] = { receivable: 0, payable: 0 };
-            if(t.type === 'Receivable') partyMap[t.party].receivable += t.amount;
-            else partyMap[t.party].payable += t.amount;
+            if(t.type === 'Expense') return;
+            
+            const cleanParty = t.party.trim();
+            const lowerKey = cleanParty.toLowerCase();
+            
+            if(!partyMap[lowerKey]) {
+                partyMap[lowerKey] = { displayName: cleanParty, receivable: 0, payable: 0 };
+            }
+            
+            if(t.type === 'Receivable') partyMap[lowerKey].receivable += t.amount;
+            else if(t.type === 'Payable') partyMap[lowerKey].payable += t.amount;
         });
 
-        let parties = Object.keys(partyMap).sort();
+        let partyKeys = Object.keys(partyMap).sort();
         if(searchQuery) {
-            parties = parties.filter(p => p.toLowerCase().includes(searchQuery));
+            partyKeys = partyKeys.filter(k => partyMap[k].displayName.toLowerCase().includes(searchQuery));
         }
 
-        if(parties.length === 0) {
+        if(partyKeys.length === 0) {
             container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">No party records found.</p>`;
             return;
         }
 
-        parties.forEach(party => {
-            const data = partyMap[party];
+        partyKeys.forEach(key => {
+            const data = partyMap[key];
             const net = data.receivable - data.payable;
             const netText = net >= 0 ? `To Take: Rs ${net.toLocaleString()}` : `To Give: Rs ${Math.abs(net).toLocaleString()}`;
             const badgeColor = net >= 0 ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/40' : 'text-rose-500 bg-rose-50 dark:bg-rose-950/40';
@@ -665,10 +822,10 @@
             container.innerHTML += `
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center p-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 rounded-xl gap-2">
                     <div>
-                        <h4 class="font-bold text-xs text-slate-900 dark:text-white">${party}</h4>
+                        <h4 class="font-bold text-xs text-slate-900 dark:text-white">${data.displayName}</h4>
                         <p class="text-[11px] font-semibold mt-0.5 px-2 py-0.5 rounded inline-block ${badgeColor}">${netText}</p>
                     </div>
-                    <button onclick="openLedgerModal('${party}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition">View Ledger / Settle</button>
+                    <button onclick="openLedgerModal('${data.displayName.replace(/'/g, "\\'")}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition">View Ledger / Settle</button>
                 </div>
             `;
         });
@@ -696,7 +853,7 @@
         
         const partyTxns = [];
         transactions.forEach((t, idx) => {
-            if(t.party === activePartyName) {
+            if(t.party && t.party.toLowerCase() === activePartyName.toLowerCase() && t.type !== 'Expense') {
                 partyTxns.push({ ...t, originalIndex: idx });
             }
         });
@@ -735,18 +892,16 @@
         const txnType = type === 'Paid' ? 'Payable' : 'Receivable';
         const noteText = type === 'Paid' ? 'Payment Given (Paid)' : 'Payment Received';
         
-        const newId = 'txn_' + Date.now();
-        const txnData = {
-            id: newId,
+        transactions.push({
             party: activePartyName,
             type: txnType,
             amount: amount,
             date: new Date().toISOString().slice(0, 10),
             note: noteText,
             npr: amount, inr: 0, rate: 0, period: 0
-        };
+        });
 
-        db.ref('digital_notebook/transactions/' + newId).set(txnData);
+        saveData();
         document.getElementById('settle-amount').value = '';
         renderModalLedgerContent();
         showToast("Payment recorded successfully!");
@@ -754,7 +909,7 @@
 
     function printPartyLedger() {
         const printWindow = window.open('', '_blank');
-        const partyTxns = transactions.filter(t => t.party === activePartyName);
+        const partyTxns = transactions.filter(t => t.party && t.party.toLowerCase() === activePartyName.toLowerCase() && t.type !== 'Expense');
         let html = `<html><head><title>Ledger - ${activePartyName}</title><style>body{font-family:sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background:#f4f4f4;}</style></head><body>`;
         html += `<h2>Party Statement: ${activePartyName}</h2><p>Generated on: ${new Date().toLocaleDateString()}</p>`;
         html += `<table><tr><th>Date</th><th>Type</th><th>Note</th><th>Amount (Rs)</th></tr>`;
@@ -791,18 +946,6 @@
         filtered.forEach(s => {
             html += `<tr><td>${s.date}</td><td>${s.title}</td><td>${s.category}</td><td>${s.amount}</td></tr>`;
         });
-        html += `</table></body></html>`;
-        printWindow.document.write(html);
-        printWindow.document.close();
-        printWindow.print();
-    }
-
-    function printAllPDF() {
-        const printWindow = window.open('', '_blank');
-        let html = `<html><head><title>Full Summary Report</title><style>body{font-family:sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background:#f4f4f4;}</style></head><body>`;
-        html += `<h2>Comprehensive Report</h2><p>Generated on: ${new Date().toLocaleDateString()}</p>`;
-        html += `<h3>Transactions</h3><table><tr><th>Date</th><th>Party</th><th>Type</th><th>Amount (Rs)</th></tr>`;
-        transactions.forEach(t => html += `<tr><td>${t.date}</td><td>${t.party}</td><td>${t.type}</td><td>${t.amount}</td></tr>`);
         html += `</table></body></html>`;
         printWindow.document.write(html);
         printWindow.document.close();
