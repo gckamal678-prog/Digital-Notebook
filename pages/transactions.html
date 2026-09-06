@@ -8,7 +8,7 @@
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <!-- html2pdf library for PDF generation -->
+    <!-- html2pdf Library for Exporting PDFs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
         tailwind.config = {
@@ -57,11 +57,6 @@
                 <span class="p-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-emerald-500 text-xs">📊</span> 
                 <span>Cashflow & Ledger</span>
             </h1>
-            
-            <!-- PDF Button -->
-            <button type="button" onclick="exportCashflowPDF()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-2 py-1 rounded-md text-[11px] font-semibold transition flex items-center gap-1 shrink-0">
-                <i class="fa-solid fa-file-pdf text-rose-500"></i> PDF
-            </button>
         </div>
 
         <!-- ड्रपडाउनमा Income र Saving सहितको कम्प्याक्ट फिल्टर बार -->
@@ -92,6 +87,7 @@
 
     <!-- Summary Cards (३ माथि र २ तल) -->
     <div class="grid grid-cols-3 gap-2">
+        <!-- माथिल्लो ३ वटा कार्डहरू -->
         <div class="bg-emerald-50 dark:bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900/50">
             <p class="text-[9px] text-emerald-700 dark:text-emerald-400 font-bold uppercase tracking-wider">Total Income</p>
             <h2 id="summary-income" class="text-xs md:text-sm font-extrabold text-emerald-800 dark:text-emerald-200 mt-0.5">Rs 0</h2>
@@ -105,6 +101,7 @@
             <h2 id="summary-expense" class="text-xs md:text-sm font-extrabold text-blue-800 dark:text-blue-200 mt-0.5">Rs 0</h2>
         </div>
 
+        <!-- तल्लो २ वटा कार्डहरू -->
         <div class="bg-rose-50 dark:bg-rose-950/40 p-2.5 rounded-xl border border-rose-200 dark:border-rose-900/50" style="grid-column: span 1.5 / span 1.5;">
             <p class="text-[9px] text-rose-700 dark:text-rose-400 font-bold uppercase tracking-wider">Receivable </p>
             <h2 id="summary-receivable" class="text-xs md:text-sm font-extrabold text-rose-800 dark:text-rose-200 mt-0.5">Rs 0</h2>
@@ -188,14 +185,14 @@
     <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
         <button onclick="toggleAccordion('section-party')" class="w-full flex justify-between items-center p-3.5 text-left font-bold text-xs text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
             <span class="flex items-center gap-2"><i class="fa-solid fa-users text-purple-500"></i> Party Accounts & Ledger</span>
-            <i id="icon-section-party" class="fa-solid fa-chevron-down transition-transform"></i>
+            <div class="flex items-center gap-2">
+                <button onclick="event.stopPropagation(); exportPartyAccountPDF();" class="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded text-[10px]"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                <i id="icon-section-party" class="fa-solid fa-chevron-down transition-transform"></i>
+            </div>
         </button>
         <div id="content-section-party" class="hidden p-3.5 md:p-5 border-t border-slate-100 dark:border-slate-800 space-y-3">
             <div class="flex justify-between items-center gap-2">
                 <input type="text" id="search-party" placeholder="Search party name..." oninput="renderPartyAccounts()" class="w-full md:w-64 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white px-2.5 py-1.5 rounded-lg text-xs outline-none">
-                <button type="button" onclick="exportPartyAccountPDF()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-2 py-1.5 rounded-md text-[11px] font-semibold transition flex items-center gap-1 shrink-0">
-                    <i class="fa-solid fa-file-pdf text-rose-500"></i> PDF
-                </button>
             </div>
             <div id="party-ledger-id" class="space-y-2">
                 <div id="party-list-container" class="space-y-2"></div>
@@ -207,7 +204,10 @@
     <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
         <button onclick="toggleAccordion('section-income')" class="w-full flex justify-between items-center p-3.5 text-left font-bold text-xs text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
             <span class="flex items-center gap-2"><i class="fa-solid fa-wallet text-emerald-500"></i> Add Income Source</span>
-            <i id="icon-section-income" class="fa-solid fa-chevron-down transition-transform"></i>
+            <div class="flex items-center gap-2">
+                <button onclick="event.stopPropagation(); exportIncomePDF();" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded text-[10px]"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                <i id="icon-section-income" class="fa-solid fa-chevron-down transition-transform"></i>
+            </div>
         </button>
         <div id="content-section-income" class="hidden p-3.5 md:p-5 border-t border-slate-100 dark:border-slate-800 space-y-3">
             <form id="income-form" onsubmit="saveIncome(event)" class="space-y-2.5">
@@ -242,11 +242,6 @@
                     <button type="submit" id="income-submit-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium p-2 rounded-lg text-xs transition">Add Income</button>
                 </div>
             </form>
-            <div class="flex justify-end pt-1">
-                <button type="button" onclick="exportIncomePDF()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-2 py-1 rounded-md text-[11px] font-semibold transition flex items-center gap-1 shrink-0">
-                    <i class="fa-solid fa-file-pdf text-rose-500"></i> PDF
-                </button>
-            </div>
             <div id="income-table-id">
                 <div id="income-list-container" class="space-y-2 pt-2"></div>
             </div>
@@ -261,7 +256,10 @@
     <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
         <button onclick="toggleAccordion('section-savings')" class="w-full flex justify-between items-center p-3.5 text-left font-bold text-xs text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
             <span class="flex items-center gap-2"><i class="fa-solid fa-piggy-bank text-amber-500"></i> Add Cashflow / Savings</span>
-            <i id="icon-section-savings" class="fa-solid fa-chevron-down transition-transform"></i>
+            <div class="flex items-center gap-2">
+                <button onclick="event.stopPropagation(); exportCashflowPDF();" class="bg-amber-600 hover:bg-amber-700 text-white px-2 py-1 rounded text-[10px]"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                <i id="icon-section-savings" class="fa-solid fa-chevron-down transition-transform"></i>
+            </div>
         </button>
         <div id="content-section-savings" class="hidden p-3.5 md:p-5 border-t border-slate-100 dark:border-slate-800 space-y-3">
             <form id="savings-form" onsubmit="saveSavings(event)" class="space-y-2.5">
@@ -304,11 +302,6 @@
                     <button type="submit" id="savings-submit-btn" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium p-2 rounded-lg text-xs transition">Add Cashflow</button>
                 </div>
             </form>
-            <div class="flex justify-end pt-1">
-                <button type="button" onclick="exportSavingPDF()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-2 py-1 rounded-md text-[11px] font-semibold transition flex items-center gap-1 shrink-0">
-                    <i class="fa-solid fa-file-pdf text-rose-500"></i> PDF
-                </button>
-            </div>
             <div id="saving-table-id">
                 <div id="savings-list-container" class="space-y-2 pt-2"></div>
             </div>
@@ -351,6 +344,14 @@
     document.getElementById('txn-date').valueAsDate = new Date();
     document.getElementById('income-date').valueAsDate = new Date();
     document.getElementById('savings-date').valueAsDate = new Date();
+
+    // Placeholder functions for PDF Headers/Footers if not defined elsewhere
+    function getProfilePDFHeader() {
+        return `<div style="text-align: center; margin-bottom: 20px;"><h1 style="font-size: 16px; margin: 0; color: #111;">Digital Notebook</h1></div>`;
+    }
+    function getProfilePDFFooter() {
+        return `<div style="text-align: center; margin-top: 20px; font-size: 10px; color: #777;"><p>Generated via Cashflow & Ledger App</p></div>`;
+    }
 
     function saveData() {
         localStorage.setItem('my_transactions', JSON.stringify(transactions));
@@ -558,7 +559,13 @@
     }
 
     function applyGlobalFilters() { refreshAll(); }
-    
+    function clearDateFilter() {
+        document.getElementById('filter-type').value = 'All';
+        document.getElementById('filter-from-date').value = '';
+        document.getElementById('filter-to-date').value = '';
+        refreshAll();
+    }
+
     function getDateFilteredData(data) {
         const filterType = document.getElementById('filter-type').value;
         const fromDate = document.getElementById('filter-from-date').value;
@@ -757,38 +764,132 @@
         document.getElementById('savings-table-total').innerText = 'Rs ' + totalSavingsSum.toLocaleString();
     }
 
-    function getProfilePDFHeader() {
-        const name = localStorage.getItem('profile_name');
-        const address = localStorage.getItem('profile_address');
-        const photo = localStorage.getItem('profile_photo');
+    // PDF Export Functions (तपाईंले दिनुभएका हुबहु फङ्सनहरू)
+    function exportSavingPDF() {
+        const profileHeader = getProfilePDFHeader();
+        const profileFooter = getProfilePDFFooter();
+        
+        let savingHTML = '';
+        let totalSum = 0;
 
-        return `
-            <div class="pdf-header" style="display: flex; justify-content: center; align-items: center; border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 15px; font-family: sans-serif; gap: 15px;">
-                <div class="header-left">
-                    ${photo ? `<img src="${photo}" alt="Logo" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%;">` : ''}
+        savings.forEach(s => {
+            totalSum += s.amount;
+            savingHTML += `
+                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 11px;">
+                    <div><strong>${s.title}</strong> <span style="color: #666; font-size: 10px;">(${s.category} - ${s.date})</span></div>
+                    <div style="font-weight: bold; color: #d97706;">Rs ${s.amount.toLocaleString()}</div>
                 </div>
-                <div class="header-right" style="text-align: left;">
-                    ${name ? `<h3 style="margin: 0; color: #333; font-size: 16px;">${name}</h3>` : ''}
-                    ${address ? `<p style="margin: 2px 0; color: #666; font-size: 11px;">${address}</p>` : ''}
+            `;
+        });
+
+        if(savings.length === 0) {
+            savingHTML = `<p style="text-align: center; color: #888; font-size: 11px;">No saving records found.</p>`;
+        }
+
+        const finalHTML = `
+            <div style="padding: 20px; font-family: sans-serif;">
+                ${profileHeader}
+                <h2 style="text-align: center; font-size: 14px; margin-bottom: 15px; color: #333;">Cashflow / Saving Report</h2>
+                <div style="margin-bottom: 10px;">${savingHTML}</div>
+                <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 8px; border-top: 1px solid #333; font-size: 12px; font-weight: bold;">
+                    <span>Total Saving:</span>
+                    <span style="color: #d97706;">Rs ${totalSum.toLocaleString()}</span>
                 </div>
+                ${profileFooter}
             </div>
         `;
+
+        html2pdf().from(finalHTML).save('saving-report.pdf');
     }
 
-    function getProfilePDFFooter() {
-        const phone = localStorage.getItem('profile_phone');
-        const email = localStorage.getItem('profile_email');
+    function exportIncomePDF() {
+        const profileHeader = getProfilePDFHeader();
+        const profileFooter = getProfilePDFFooter();
+        
+        let incomeHTML = '';
+        let totalSum = 0;
 
-        return `
-            <div class="pdf-footer" style="border-top: 1px solid #ddd; padding-top: 10px; margin-top: 20px; font-family: sans-serif; text-align: center; font-size: 11px; color: #666;">
-                ${phone ? `<span>Phone: ${phone}</span>` : ''}
-                ${phone && email ? ` &nbsp;|&nbsp; ` : ''}
-                ${email ? `<span>Email: ${email}</span>` : ''}
+        if(incomes.length === 0) {
+            incomeHTML = `<p style="text-align: center; color: #888; font-size: 11px;">No income records found.</p>`;
+        } else {
+            incomes.forEach(i => {
+                totalSum += i.amount;
+                incomeHTML += `
+                    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 11px;">
+                        <div><strong>${i.name}</strong> <span style="color: #666; font-size: 10px;">(${i.date})</span></div>
+                        <div style="font-weight: bold; color: #059669;">Rs ${i.amount.toLocaleString()}</div>
+                    </div>
+                `;
+            });
+        }
+
+        const finalHTML = `
+            <div style="padding: 20px; font-family: sans-serif;">
+                ${profileHeader}
+                <h2 style="text-align: center; font-size: 14px; margin-bottom: 15px; color: #333;">Income Source Report</h2>
+                <div style="margin-bottom: 10px;">${incomeHTML}</div>
+                <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 8px; border-top: 1px solid #333; font-size: 12px; font-weight: bold;">
+                    <span>Total Income:</span>
+                    <span style="color: #059669;">Rs ${totalSum.toLocaleString()}</span>
+                </div>
+                ${profileFooter}
             </div>
         `;
+
+        html2pdf().from(finalHTML).save('income-report.pdf');
     }
 
-    // १. ग्लोबल फिल्टर गरिएको क्यासफ्लो डाटामा आधारित PDF
+    function exportPartyAccountPDF() {
+        const profileHeader = getProfilePDFHeader();
+        const profileFooter = getProfilePDFFooter();
+
+        const partyMap = {};
+        transactions.forEach((t) => {
+            if(t.type === 'Expense') return;
+            const cleanParty = t.party.trim();
+            const lowerKey = cleanParty.toLowerCase();
+            if(!partyMap[lowerKey]) partyMap[lowerKey] = { displayName: cleanParty, receivable: 0, payable: 0 };
+            if(t.type === 'Receivable') partyMap[lowerKey].receivable += t.amount;
+            else if(t.type === 'Payable') partyMap[lowerKey].payable += t.amount;
+        });
+
+        let partyKeys = Object.keys(partyMap).sort();
+        let partyContent = '';
+
+        if(partyKeys.length === 0) {
+            partyContent = `<p style="text-align: center; color: #888; font-size: 11px;">No party records found.</p>`;
+        } else {
+            partyKeys.forEach(key => {
+                const data = partyMap[key];
+                const net = data.receivable - data.payable;
+                const netText = net >= 0 ? `To Take: Rs ${net.toLocaleString()}` : `To Give: Rs ${Math.abs(net).toLocaleString()}`;
+                const colorStyle = net >= 0 ? 'color: #059669;' : 'color: #e11d48;';
+
+                partyContent += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 11px;">
+                        <div>
+                            <strong>${data.displayName}</strong>
+                        </div>
+                        <div style="font-weight: bold; ${colorStyle}">
+                            ${netText}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        const finalHTML = `
+            <div style="padding: 20px; font-family: sans-serif;">
+                ${profileHeader}
+                <h2 style="text-align: center; font-size: 14px; margin-bottom: 15px; color: #333;">Party Account Ledger Report</h2>
+                <div style="margin-bottom: 10px;">${partyContent}</div>
+                ${profileFooter}
+            </div>
+        `;
+
+        html2pdf().from(finalHTML).save('party-account.pdf');
+    }
+
     function exportCashflowPDF() {
         const profileHeader = getProfilePDFHeader();
         const profileFooter = getProfilePDFFooter();
@@ -825,102 +926,6 @@
         `;
 
         html2pdf().from(finalHTML).save('cashflow-ledger.pdf');
-    }
-
-    // २. पार्टी अकाउन्ट्स र लेजरको PDF
-    function exportPartyAccountPDF() {
-        const profileHeader = getProfilePDFHeader();
-        const profileFooter = getProfilePDFFooter();
-        const partyContent = document.getElementById('party-ledger-id').innerHTML;
-
-        const finalHTML = `
-            <div style="padding: 20px; font-family: sans-serif;">
-                ${profileHeader}
-                <h2 style="text-align: center; font-size: 14px; margin-bottom: 15px; color: #333;">Party Account Ledger</h2>
-                ${partyContent}
-                ${profileFooter}
-            </div>
-        `;
-
-        html2pdf().from(finalHTML).save('party-account.pdf');
-    }
-
-    // ३. फिल्टर गरिएको इन्कम रिपोर्टको PDF
-    function exportIncomePDF() {
-        const profileHeader = getProfilePDFHeader();
-        const profileFooter = getProfilePDFFooter();
-        
-        const filteredIncomes = getDateFilteredData(incomes);
-        let incomeHTML = '';
-        let totalSum = 0;
-
-        filteredIncomes.forEach(i => {
-            totalSum += i.amount;
-            incomeHTML += `
-                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 11px;">
-                    <div><strong>${i.name}</strong> <span style="color: #666; font-size: 10px;">(${i.date})</span></div>
-                    <div style="font-weight: bold; color: #059669;">Rs ${i.amount.toLocaleString()}</div>
-                </div>
-            `;
-        });
-
-        if(filteredIncomes.length === 0) {
-            incomeHTML = `<p style="text-align: center; color: #888; font-size: 11px;">No income records found for selected filter.</p>`;
-        }
-
-        const finalHTML = `
-            <div style="padding: 20px; font-family: sans-serif;">
-                ${profileHeader}
-                <h2 style="text-align: center; font-size: 14px; margin-bottom: 15px; color: #333;">Income Source Report</h2>
-                <div style="margin-bottom: 10px;">${incomeHTML}</div>
-                <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 8px; border-top: 1px solid #333; font-size: 12px; font-weight: bold;">
-                    <span>Total Income:</span>
-                    <span style="color: #059669;">Rs ${totalSum.toLocaleString()}</span>
-                </div>
-                ${profileFooter}
-            </div>
-        `;
-
-        html2pdf().from(finalHTML).save('income-report.pdf');
-    }
-
-    // ४. फिल्टर गरिएको सेभिङ रिपोर्टको PDF
-    function exportSavingPDF() {
-        const profileHeader = getProfilePDFHeader();
-        const profileFooter = getProfilePDFFooter();
-        
-        const filteredSavings = getDateFilteredData(savings);
-        let savingHTML = '';
-        let totalSum = 0;
-
-        filteredSavings.forEach(s => {
-            totalSum += s.amount;
-            savingHTML += `
-                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 11px;">
-                    <div><strong>${s.title}</strong> <span style="color: #666; font-size: 10px;">(${s.category} - ${s.date})</span></div>
-                    <div style="font-weight: bold; color: #d97706;">Rs ${s.amount.toLocaleString()}</div>
-                </div>
-            `;
-        });
-
-        if(filteredSavings.length === 0) {
-            savingHTML = `<p style="text-align: center; color: #888; font-size: 11px;">No saving records found for selected filter.</p>`;
-        }
-
-        const finalHTML = `
-            <div style="padding: 20px; font-family: sans-serif;">
-                ${profileHeader}
-                <h2 style="text-align: center; font-size: 14px; margin-bottom: 15px; color: #333;">Saving Report</h2>
-                <div style="margin-bottom: 10px;">${savingHTML}</div>
-                <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 8px; border-top: 1px solid #333; font-size: 12px; font-weight: bold;">
-                    <span>Total Saving:</span>
-                    <span style="color: #d97706;">Rs ${totalSum.toLocaleString()}</span>
-                </div>
-                ${profileFooter}
-            </div>
-        `;
-
-        html2pdf().from(finalHTML).save('saving-report.pdf');
     }
 
     refreshAll();
