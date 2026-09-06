@@ -39,22 +39,19 @@
 
 <div class="space-y-4 w-full flex-1 max-w-5xl mx-auto">
     <!-- Header Section with Corrected Global PDF Filter (Styled as per image) -->
-    <div class="flex flex-col md:flex-row justify-between items-center bg-white dark:bg-slate-900 p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 gap-4">
+    <div class="flex justify-between items-center bg-white dark:bg-slate-900 p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
         <h1 class="text-base md:text-xl font-bold tracking-wider text-slate-900 dark:text-white flex items-center gap-2.5">
             <span class="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-emerald-500">📊</span> 
             <span id="profile-org-name">Cashflow & Ledger</span>
         </h1>
-        
-        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
-            <button type="button" id="generate-pdf-btn" class="bg-rose-500 hover:bg-rose-600 text-white border-none px-4 py-2 rounded-xl cursor-pointer text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                <i class="fa-solid fa-file-pdf"></i> PDF
-            </button>
-        </div>
+        <button type="button" id="generate-pdf-btn" class="bg-rose-500 hover:bg-rose-600 text-white border-none px-4 py-2 rounded-xl cursor-pointer text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+            <i class="fa-solid fa-file-pdf"></i> PDF
+        </button>
     </div>
 
-    <!-- Filter Bar Container (Matched with image layout) -->
-    <div class="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-2 shadow-sm">
-        <div class="flex-1 min-w-[130px]">
+    <!-- Filter Bar Container (Matched with image layout - Single Line) -->
+    <div class="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center gap-2 shadow-sm overflow-x-auto">
+        <div class="flex-1 min-w-[120px]">
             <select id="transaction-type-filter" class="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white px-3 py-2 rounded-xl text-xs outline-none">
                 <option value="all">🏢 (All)</option>
                 <option value="Receivable">लिने (Receivable)</option>
@@ -64,36 +61,43 @@
                 <option value="Income">आम्दानी</option>
             </select>
         </div>
-        <div class="flex-1 min-w-[130px]">
+        <div class="flex-1 min-w-[120px]">
             <input type="date" id="start-date" class="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white px-3 py-2 rounded-xl text-xs outline-none"> 
         </div>
-        <div class="flex items-center gap-2 flex-1 min-w-[130px]">
-            <span class="text-slate-400 text-xs">To</span> 
+        <div class="flex items-center gap-1.5 flex-1 min-w-[130px]">
+            <span class="text-slate-400 text-xs shrink-0">To</span> 
             <input type="date" id="end-date" class="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white px-3 py-2 rounded-xl text-xs outline-none">
         </div>
     </div>
 
     <!-- Advanced Summary Cards -->
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <div class="bg-emerald-50 dark:bg-emerald-950/40 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-900/50">
-            <p class="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold uppercase tracking-wider">Total Income</p>
-            <h2 id="summary-income" class="text-lg md:text-xl font-extrabold text-emerald-800 dark:text-emerald-200 mt-1">Rs 0</h2>
+    <div class="space-y-3">
+        <!-- First Line: Total Income, Total Saving, Expense -->
+        <div class="grid grid-cols-3 gap-3">
+            <div class="bg-emerald-50 dark:bg-emerald-950/40 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-900/50">
+                <p class="text-[10px] md:text-[11px] text-emerald-700 dark:text-emerald-400 font-bold uppercase tracking-wider truncate">TOTAL INCOME</p>
+                <h2 id="summary-income" class="text-sm md:text-xl font-extrabold text-emerald-800 dark:text-emerald-200 mt-1">Rs 0</h2>
+            </div>
+            <div class="bg-amber-50 dark:bg-amber-950/40 p-4 rounded-2xl border border-amber-200 dark:border-amber-900/50">
+                <p class="text-[10px] md:text-[11px] text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider truncate">TOTAL SAVING</p>
+                <h2 id="summary-cashflow" class="text-sm md:text-xl font-extrabold text-amber-800 dark:text-amber-200 mt-1">Rs 0</h2>
+            </div>
+            <div class="bg-blue-50 dark:bg-blue-950/40 p-4 rounded-2xl border border-blue-200 dark:border-blue-900/50">
+                <p class="text-[10px] md:text-[11px] text-blue-700 dark:text-blue-400 font-bold uppercase tracking-wider truncate">EXPENSE</p>
+                <h2 id="summary-expense" class="text-sm md:text-xl font-extrabold text-blue-800 dark:text-blue-200 mt-1">Rs 0</h2>
+            </div>
         </div>
-        <div class="bg-amber-50 dark:bg-amber-950/40 p-4 rounded-2xl border border-amber-200 dark:border-amber-900/50">
-            <p class="text-[11px] text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider">Total Saving</p>
-            <h2 id="summary-cashflow" class="text-lg md:text-xl font-extrabold text-amber-800 dark:text-amber-200 mt-1">Rs 0</h2>
-        </div>
-        <div class="bg-blue-50 dark:bg-blue-950/40 p-4 rounded-2xl border border-blue-200 dark:border-blue-900/50">
-            <p class="text-[11px] text-blue-700 dark:text-blue-400 font-bold uppercase tracking-wider">Expense (खर्च)</p>
-            <h2 id="summary-expense" class="text-lg md:text-xl font-extrabold text-blue-800 dark:text-blue-200 mt-1">Rs 0</h2>
-        </div>
-        <div class="bg-rose-50 dark:bg-rose-950/40 p-4 rounded-2xl border border-rose-200 dark:border-rose-900/50">
-            <p class="text-[11px] text-rose-700 dark:text-rose-400 font-bold uppercase tracking-wider">Receivable (लिनु)</p>
-            <h2 id="summary-receivable" class="text-lg md:text-xl font-extrabold text-rose-800 dark:text-rose-200 mt-1">Rs 0</h2>
-        </div>
-        <div class="bg-orange-50 dark:bg-orange-950/40 p-4 rounded-2xl border border-orange-200 dark:border-orange-900/50">
-            <p class="text-[11px] text-orange-700 dark:text-orange-400 font-bold uppercase tracking-wider">Payable (दिनु)</p>
-            <h2 id="summary-payable" class="text-lg md:text-xl font-extrabold text-orange-800 dark:text-orange-200 mt-1">Rs 0</h2>
+
+        <!-- Second Line: Receivable & Payable -->
+        <div class="grid grid-cols-2 gap-3">
+            <div class="bg-rose-50 dark:bg-rose-950/40 p-4 rounded-2xl border border-rose-200 dark:border-rose-900/50">
+                <p class="text-[10px] md:text-[11px] text-rose-700 dark:text-rose-400 font-bold uppercase tracking-wider truncate">RECEIVABLE</p>
+                <h2 id="summary-receivable" class="text-sm md:text-xl font-extrabold text-rose-800 dark:text-rose-200 mt-1">Rs 0</h2>
+            </div>
+            <div class="bg-orange-50 dark:bg-orange-950/40 p-4 rounded-2xl border border-orange-200 dark:border-orange-900/50">
+                <p class="text-[10px] md:text-[11px] text-orange-700 dark:text-orange-400 font-bold uppercase tracking-wider truncate">PAYABLE</p>
+                <h2 id="summary-payable" class="text-sm md:text-xl font-extrabold text-orange-800 dark:text-orange-200 mt-1">Rs 0</h2>
+            </div>
         </div>
     </div>
 
