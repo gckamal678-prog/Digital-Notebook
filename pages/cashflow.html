@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Income, Cashflow & Party Ledger - Digital Notebook</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Firebase App (Core) & Realtime Database -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <!-- Firebase App (compat) & Realtime Database SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -49,14 +49,14 @@
         </h1>
         
         <div class="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
-            <!-- Date Range Filter & Export PDF in one line -->
+            <!-- Date Range Filter & Print PDF in one line -->
             <div class="flex flex-row items-center gap-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 rounded-xl text-xs">
                 <i class="fa-solid fa-calendar text-slate-400"></i>
                 <input type="date" id="filter-from-date" onchange="applyGlobalFilters()" class="bg-transparent text-slate-900 dark:text-white outline-none">
                 <span class="text-slate-400">-</span>
                 <input type="date" id="filter-to-date" onchange="applyGlobalFilters()" class="bg-transparent text-slate-900 dark:text-white outline-none">
                 <button onclick="clearDateFilter()" class="text-slate-400 hover:text-rose-500 ml-1"><i class="fa-solid fa-xmark"></i></button>
-                <button type="button" onclick="exportGlobalPDF()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-2.5 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1 ml-2">
+                <button type="button" onclick="printAllPDF()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-2.5 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1 ml-2">
                     <i class="fa-solid fa-file-pdf text-rose-500"></i> PDF
                 </button>
             </div>
@@ -91,7 +91,7 @@
         </button>
         <div id="content-section-transaction" class="hidden p-4 md:p-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
             <form id="transaction-form" onsubmit="saveTransaction(event)" class="space-y-3">
-                <input type="hidden" id="edit-txn-key" value="">
+                <input type="hidden" id="edit-txn-index" value="">
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
@@ -108,8 +108,8 @@
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-400 mb-1">Type</label>
                         <select id="txn-type" onchange="handleTypeChange()" class="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="Receivable">Receivable (लिनु)</option>
-                            <option value="Payable">Payable (दिनु)</option>
+                            <option value="Receivable">Receivable (To Take)</option>
+                            <option value="Payable">Payable (To Give)</option>
                             <option value="Expense">Expense (खर्च)</option>
                         </select>
                     </div>
@@ -174,7 +174,7 @@
         </button>
         <div id="content-section-income" class="hidden p-4 md:p-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
             <form id="income-form" onsubmit="saveIncome(event)" class="space-y-3">
-                <input type="hidden" id="edit-income-key" value="">
+                <input type="hidden" id="edit-income-index" value="">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-400 mb-1">Income Source Name</label>
@@ -225,7 +225,7 @@
         </button>
         <div id="content-section-savings" class="hidden p-4 md:p-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
             <form id="savings-form" onsubmit="saveSavings(event)" class="space-y-3">
-                <input type="hidden" id="edit-savings-key" value="">
+                <input type="hidden" id="edit-savings-index" value="">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div class="md:col-span-2">
                         <label class="block text-[11px] font-semibold text-slate-400 mb-1">Cashflow Title</label>
@@ -277,8 +277,8 @@
     </div>
 </div>
 
-<!-- Toast Container (Disabled/Hidden) -->
-<div id="toast-container" class="hidden"></div>
+<!-- Toast Notification -->
+<div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
 <!-- Party Ledger Modal -->
 <div id="ledger-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 p-3">
@@ -306,34 +306,49 @@
 </div>
 
 <script>
-    // Firebase Configuration (तपाइँको Firebase Console बाट लिएर यहाँ राख्नुहोला)
+    // Firebase Configuration Initialization
     const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_AUTH_DOMAIN",
-        databaseURL: "YOUR_DATABASE_URL",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_STORAGE_BUCKET",
-        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-        appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyDDY_v7RHnkCTI6uyV4DNDjqoaIBGweg8c",
+      authDomain: "digital-a2552.firebaseapp.com",
+      projectId: "digital-a2552",
+      storageBucket: "digital-a2552.firebasestorage.app",
+      messagingSenderId: "218135618179",
+      appId: "1:218135618179:web:821b76920d3e5669ac31b6"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let transactionsObj = {};
-    let incomesObj = {};
-    let savingsObj = {};
-    
+    let transactions = [];
+    let incomes = [];
+    let savings = [];
     let activePartyName = null;
 
     document.getElementById('txn-date').valueAsDate = new Date();
     document.getElementById('income-date').valueAsDate = new Date();
     document.getElementById('savings-date').valueAsDate = new Date();
 
-    // Toast alert बन्द गरिएको (Disabled)
+    // Fetch data from Firebase in Real-time (Auto Sync & Reload)
+    db.ref('digital_notebook').on('value', (snapshot) => {
+        const data = snapshot.val() || {};
+        transactions = data.transactions ? Object.values(data.transactions) : [];
+        incomes = data.incomes ? Object.values(data.incomes) : [];
+        savings = data.savings ? Object.values(data.savings) : [];
+        refreshAll();
+    });
+
     function showToast(message, type = 'success') {
-        // Do nothing to disable toast alerts
+        // Domain / standard toast alerts active/inactive handle
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `bg-slate-900 text-white border border-slate-800 px-4 py-2.5 rounded-xl text-xs shadow-xl flex items-center gap-2 transition-all duration-300 transform translate-y-[-10px] opacity-0 pointer-events-auto`;
+        toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> <span>${message}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => toast.classList.remove('translate-y-[-10px]', 'opacity-0'), 10);
+        setTimeout(() => {
+            toast.classList.add('opacity-0', 'translate-y-[-10px]');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
     }
 
     function toggleAccordion(sectionId) {
@@ -385,23 +400,6 @@
         document.getElementById('savings-total-calc').value = total > 0 ? `Rs ${total.toFixed(2)}` : '';
     }
 
-    // Firebase Realtime Listeners (Automatic Sync & Reload)
-    db.ref('transactions').on('value', (snapshot) => {
-        transactionsObj = snapshot.val() || {};
-        refreshAll();
-        if(activePartyName) renderModalLedgerContent();
-    });
-
-    db.ref('incomes').on('value', (snapshot) => {
-        incomesObj = snapshot.val() || {};
-        refreshAll();
-    });
-
-    db.ref('cashflow').on('value', (snapshot) => {
-        savingsObj = snapshot.val() || {};
-        refreshAll();
-    });
-
     function saveTransaction(e) {
         e.preventDefault();
         const date = document.getElementById('txn-date').value;
@@ -419,23 +417,25 @@
         }
 
         const note = document.getElementById('txn-note').value;
-        const key = document.getElementById('edit-txn-key').value;
+        const index = document.getElementById('edit-txn-index').value;
 
-        const txnData = { date, party, type, npr, inr, principal, rate, period, amount: totalAmount, note };
+        const txnData = { id: index !== "" ? transactions[index].id : 'txn_' + Date.now(), date, party, type, npr, inr, principal, rate, period, amount: totalAmount, note };
 
-        if(key === "") {
-            db.ref('transactions').push(txnData);
+        if(index === "") {
+            db.ref('digital_notebook/transactions/' + txnData.id).set(txnData);
+            showToast("Transaction saved successfully!");
         } else {
-            db.ref('transactions/' + key).set(txnData);
+            db.ref('digital_notebook/transactions/' + txnData.id).set(txnData);
+            showToast("Transaction updated successfully!");
         }
 
         resetTxnForm();
+        if(activePartyName) renderModalLedgerContent();
     }
 
-    function editTransaction(key) {
-        const t = transactionsObj[key];
-        if(!t) return;
-        document.getElementById('edit-txn-key').value = key;
+    function editTransaction(index) {
+        const t = transactions[index];
+        document.getElementById('edit-txn-index').value = index;
         document.getElementById('txn-date').value = t.date;
         document.getElementById('txn-party').value = t.party;
         document.getElementById('txn-type').value = t.type;
@@ -456,9 +456,14 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function deleteTransaction(key) {
+    function deleteTransaction(index) {
         if(confirm("Are you sure you want to delete this transaction?")) {
-            db.ref('transactions/' + key).remove();
+            const t = transactions[index];
+            if(t && t.id) {
+                db.ref('digital_notebook/transactions/' + t.id).remove();
+            }
+            if(activePartyName) renderModalLedgerContent();
+            showToast("Transaction deleted successfully!");
         }
     }
 
@@ -469,23 +474,24 @@
         const inr = parseFloat(document.getElementById('income-amount-inr').value) || 0;
         const amount = npr + (inr * 1.6);
         const date = document.getElementById('income-date').value;
-        const key = document.getElementById('edit-income-key').value;
+        const index = document.getElementById('edit-income-index').value;
 
-        const incomeData = { name, npr, inr, amount, date };
+        const incData = { id: index !== "" ? incomes[index].id : 'inc_' + Date.now(), name, npr, inr, amount, date };
 
-        if(key === "") {
-            db.ref('incomes').push(incomeData);
+        if(index === "") {
+            db.ref('digital_notebook/incomes/' + incData.id).set(incData);
+            showToast("Income added successfully!");
         } else {
-            db.ref('incomes/' + key).set(incomeData);
+            db.ref('digital_notebook/incomes/' + incData.id).set(incData);
+            showToast("Income updated successfully!");
         }
 
         resetIncomeForm();
     }
 
-    function editIncome(key) {
-        const i = incomesObj[key];
-        if(!i) return;
-        document.getElementById('edit-income-key').value = key;
+    function editIncome(index) {
+        const i = incomes[index];
+        document.getElementById('edit-income-index').value = index;
         document.getElementById('income-source-name').value = i.name;
         document.getElementById('income-amount-npr').value = i.npr || i.amount;
         document.getElementById('income-amount-inr').value = i.inr || 0;
@@ -497,16 +503,20 @@
 
     function resetIncomeForm() {
         document.getElementById('income-form').reset();
-        document.getElementById('edit-income-key').value = "";
+        document.getElementById('edit-income-index').value = "";
         document.getElementById('income-date').valueAsDate = new Date();
         document.getElementById('income-total-calc').value = "";
         document.getElementById('income-submit-btn').innerText = "Add Income";
         document.getElementById('income-cancel-btn').classList.add('hidden');
     }
 
-    function deleteIncome(key) {
+    function deleteIncome(index) {
         if(confirm("Are you sure you want to delete this income?")) {
-            db.ref('incomes/' + key).remove();
+            const i = incomes[index];
+            if(i && i.id) {
+                db.ref('digital_notebook/incomes/' + i.id).remove();
+            }
+            showToast("Income deleted successfully!");
         }
     }
 
@@ -518,23 +528,24 @@
         const inr = parseFloat(document.getElementById('savings-amount-inr').value) || 0;
         const amount = npr + (inr * 1.6);
         const date = document.getElementById('savings-date').value;
-        const key = document.getElementById('edit-savings-key').value;
+        const index = document.getElementById('edit-savings-index').value;
 
-        const savingsData = { title, category, npr, inr, amount, date };
+        const savData = { id: index !== "" ? savings[index].id : 'sav_' + Date.now(), title, category, npr, inr, amount, date };
 
-        if(key === "") {
-            db.ref('cashflow').push(savingsData);
+        if(index === "") {
+            db.ref('digital_notebook/savings/' + savData.id).set(savData);
+            showToast("Cashflow added successfully!");
         } else {
-            db.ref('cashflow/' + key).set(savingsData);
+            db.ref('digital_notebook/savings/' + savData.id).set(savData);
+            showToast("Cashflow updated successfully!");
         }
 
         resetSavingsForm();
     }
 
-    function editSavings(key) {
-        const s = savingsObj[key];
-        if(!s) return;
-        document.getElementById('edit-savings-key').value = key;
+    function editSavings(index) {
+        const s = savings[index];
+        document.getElementById('edit-savings-index').value = index;
         document.getElementById('savings-title').value = s.title;
         document.getElementById('savings-category').value = s.category;
         document.getElementById('savings-amount-npr').value = s.npr || s.amount;
@@ -547,22 +558,26 @@
 
     function resetSavingsForm() {
         document.getElementById('savings-form').reset();
-        document.getElementById('edit-savings-key').value = "";
+        document.getElementById('edit-savings-index').value = "";
         document.getElementById('savings-date').valueAsDate = new Date();
         document.getElementById('savings-total-calc').value = "";
         document.getElementById('savings-submit-btn').innerText = "Add Cashflow";
         document.getElementById('savings-cancel-btn').classList.add('hidden');
     }
 
-    function deleteSavings(key) {
+    function deleteSavings(index) {
         if(confirm("Are you sure you want to delete this cashflow?")) {
-            db.ref('cashflow/' + key).remove();
+            const s = savings[index];
+            if(s && s.id) {
+                db.ref('digital_notebook/savings/' + s.id).remove();
+            }
+            showToast("Cashflow deleted successfully!");
         }
     }
 
     function resetTxnForm() {
         document.getElementById('transaction-form').reset();
-        document.getElementById('edit-txn-key').value = "";
+        document.getElementById('edit-txn-index').value = "";
         document.getElementById('txn-date').valueAsDate = new Date();
         document.getElementById('txn-total-calc').value = "";
         document.getElementById('txn-submit-btn').innerText = "Save Transaction";
@@ -580,17 +595,14 @@
         refreshAll();
     }
 
-    function getDateFilteredArray(obj) {
+    function getDateFilteredData(data) {
         const fromDate = document.getElementById('filter-from-date').value;
         const toDate = document.getElementById('filter-to-date').value;
-        const arr = [];
-        for (let key in obj) {
-            let item = obj[key];
-            if (fromDate && item.date < fromDate) continue;
-            if (toDate && item.date > toDate) continue;
-            arr.push({ key, ...item });
-        }
-        return arr;
+        return data.filter(item => {
+            if (fromDate && item.date < fromDate) return false;
+            if (toDate && item.date > toDate) return false;
+            return true;
+        });
     }
 
     function refreshAll() {
@@ -601,9 +613,9 @@
     }
 
     function updateSummaryCards() {
-        const filteredTxns = getDateFilteredArray(transactionsObj);
-        const filteredIncomes = getDateFilteredArray(incomesObj);
-        const filteredSavings = getDateFilteredArray(savingsObj);
+        const filteredTxns = getDateFilteredData(transactions);
+        const filteredIncomes = getDateFilteredData(incomes);
+        const filteredSavings = getDateFilteredData(savings);
 
         let receivable = 0;
         let payable = 0;
@@ -628,12 +640,11 @@
         container.innerHTML = '';
 
         const partyMap = {};
-        for(let key in transactionsObj) {
-            const t = transactionsObj[key];
+        transactions.forEach((t) => {
             if(!partyMap[t.party]) partyMap[t.party] = { receivable: 0, payable: 0 };
             if(t.type === 'Receivable') partyMap[t.party].receivable += t.amount;
             else partyMap[t.party].payable += t.amount;
-        }
+        });
 
         let parties = Object.keys(partyMap).sort();
         if(searchQuery) {
@@ -684,11 +695,11 @@
         content.innerHTML = '';
         
         const partyTxns = [];
-        for(let key in transactionsObj) {
-            if(transactionsObj[key].party === activePartyName) {
-                partyTxns.push({ key, ...transactionsObj[key] });
+        transactions.forEach((t, idx) => {
+            if(t.party === activePartyName) {
+                partyTxns.push({ ...t, originalIndex: idx });
             }
-        }
+        });
 
         if(partyTxns.length === 0) {
             content.innerHTML = `<p class="text-slate-400">No transactions recorded.</p>`;
@@ -705,8 +716,8 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="font-bold ${isRec ? 'text-emerald-500' : 'text-rose-500'}">Rs ${t.amount.toLocaleString()}</span>
-                        <button onclick="editTransaction('${t.key}'); closeLedgerModal();" class="text-blue-500 hover:text-blue-700 p-1"><i class="fa-solid fa-pen text-xs"></i></button>
-                        <button onclick="deleteTransaction('${t.key}')" class="text-rose-500 hover:text-rose-700 p-1"><i class="fa-solid fa-trash text-xs"></i></button>
+                        <button onclick="editTransaction(${t.originalIndex}); closeLedgerModal();" class="text-blue-500 hover:text-blue-700 p-1"><i class="fa-solid fa-pen text-xs"></i></button>
+                        <button onclick="deleteTransaction(${t.originalIndex})" class="text-rose-500 hover:text-rose-700 p-1"><i class="fa-solid fa-trash text-xs"></i></button>
                     </div>
                 </div>
             `;
@@ -716,29 +727,34 @@
     function recordPartialSettle() {
         const amount = parseFloat(document.getElementById('settle-amount').value);
         const type = document.getElementById('settle-type').value;
-        if(!amount || amount <= 0) return;
+        if(!amount || amount <= 0) {
+            showToast("Please enter a valid amount", "error");
+            return;
+        }
 
         const txnType = type === 'Paid' ? 'Payable' : 'Receivable';
         const noteText = type === 'Paid' ? 'Payment Given (Paid)' : 'Payment Received';
         
-        db.ref('transactions').push({
+        const newId = 'txn_' + Date.now();
+        const txnData = {
+            id: newId,
             party: activePartyName,
             type: txnType,
             amount: amount,
             date: new Date().toISOString().slice(0, 10),
             note: noteText,
             npr: amount, inr: 0, rate: 0, period: 0
-        });
+        };
 
+        db.ref('digital_notebook/transactions/' + newId).set(txnData);
         document.getElementById('settle-amount').value = '';
+        renderModalLedgerContent();
+        showToast("Payment recorded successfully!");
     }
 
     function printPartyLedger() {
         const printWindow = window.open('', '_blank');
-        const partyTxns = [];
-        for(let key in transactionsObj) {
-            if(transactionsObj[key].party === activePartyName) partyTxns.push(transactionsObj[key]);
-        }
+        const partyTxns = transactions.filter(t => t.party === activePartyName);
         let html = `<html><head><title>Ledger - ${activePartyName}</title><style>body{font-family:sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background:#f4f4f4;}</style></head><body>`;
         html += `<h2>Party Statement: ${activePartyName}</h2><p>Generated on: ${new Date().toLocaleDateString()}</p>`;
         html += `<table><tr><th>Date</th><th>Type</th><th>Note</th><th>Amount (Rs)</th></tr>`;
@@ -753,7 +769,7 @@
 
     function printIncomePDF() {
         const printWindow = window.open('', '_blank');
-        const filtered = getDateFilteredArray(incomesObj);
+        const filtered = getDateFilteredData(incomes);
         let html = `<html><head><title>Income Sources</title><style>body{font-family:sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background:#f4f4f4;}</style></head><body>`;
         html += `<h2>Income Sources Report</h2><p>Generated on: ${new Date().toLocaleDateString()}</p>`;
         html += `<table><tr><th>Date</th><th>Source Name</th><th>Amount (Rs)</th></tr>`;
@@ -768,7 +784,7 @@
 
     function printSavingsPDF() {
         const printWindow = window.open('', '_blank');
-        const filtered = getDateFilteredArray(savingsObj);
+        const filtered = getDateFilteredData(savings);
         let html = `<html><head><title>Cashflow & Savings</title><style>body{font-family:sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background:#f4f4f4;}</style></head><body>`;
         html += `<h2>Cashflow & Savings Report</h2><p>Generated on: ${new Date().toLocaleDateString()}</p>`;
         html += `<table><tr><th>Date</th><th>Title</th><th>Category</th><th>Amount (Rs)</th></tr>`;
@@ -781,25 +797,34 @@
         printWindow.print();
     }
 
-    function exportGlobalPDF() {
-        printIncomePDF();
+    function printAllPDF() {
+        const printWindow = window.open('', '_blank');
+        let html = `<html><head><title>Full Summary Report</title><style>body{font-family:sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background:#f4f4f4;}</style></head><body>`;
+        html += `<h2>Comprehensive Report</h2><p>Generated on: ${new Date().toLocaleDateString()}</p>`;
+        html += `<h3>Transactions</h3><table><tr><th>Date</th><th>Party</th><th>Type</th><th>Amount (Rs)</th></tr>`;
+        transactions.forEach(t => html += `<tr><td>${t.date}</td><td>${t.party}</td><td>${t.type}</td><td>${t.amount}</td></tr>`);
+        html += `</table></body></html>`;
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.print();
     }
 
     function renderIncomeList() {
         const container = document.getElementById('income-list-container');
         container.innerHTML = '';
-        const filtered = getDateFilteredArray(incomesObj);
+        const filtered = incomes.map((item, idx) => ({ ...item, originalIndex: idx }));
+        const dateFiltered = getDateFilteredData(filtered);
         
         let totalIncomeSum = 0;
-        filtered.forEach(i => {
+        dateFiltered.forEach(i => {
             totalIncomeSum += i.amount;
             container.innerHTML += `
                 <div class="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl text-xs">
                     <div><span class="font-semibold">${i.name}</span> <span class="text-[10px] text-slate-400">(${i.date})</span></div>
                     <div class="flex items-center gap-3">
                         <span class="font-bold text-emerald-500">Rs ${i.amount.toLocaleString()}</span>
-                        <button onclick="editIncome('${i.key}')" class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="deleteIncome('${i.key}')" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
+                        <button onclick="editIncome(${i.originalIndex})" class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteIncome(${i.originalIndex})" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
             `;
@@ -810,18 +835,19 @@
     function renderSavingsList() {
         const container = document.getElementById('savings-list-container');
         container.innerHTML = '';
-        const filtered = getDateFilteredArray(savingsObj);
+        const filtered = savings.map((item, idx) => ({ ...item, originalIndex: idx }));
+        const dateFiltered = getDateFilteredData(filtered);
 
         let totalSavingsSum = 0;
-        filtered.forEach(s => {
+        dateFiltered.forEach(s => {
             totalSavingsSum += s.amount;
             container.innerHTML += `
                 <div class="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl text-xs">
                     <div><span class="font-semibold">${s.title}</span> <span class="text-[10px] px-1.5 py-0.5 bg-amber-100 dark:bg-amber-950 text-amber-600 rounded">${s.category}</span> <span class="text-[10px] text-slate-400">(${s.date})</span></div>
                     <div class="flex items-center gap-3">
                         <span class="font-bold text-amber-500">Rs ${s.amount.toLocaleString()}</span>
-                        <button onclick="editSavings('${s.key}')" class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="deleteSavings('${s.key}')" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
+                        <button onclick="editSavings(${s.originalIndex})" class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteSavings(${s.originalIndex})" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
             `;
