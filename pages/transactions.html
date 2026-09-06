@@ -92,7 +92,6 @@
 
     <!-- Summary Cards (३ माथि र २ तल) -->
     <div class="grid grid-cols-3 gap-2">
-        <!-- माथिल्लो ३ वटा कार्डहरू -->
         <div class="bg-emerald-50 dark:bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900/50">
             <p class="text-[9px] text-emerald-700 dark:text-emerald-400 font-bold uppercase tracking-wider">Total Income</p>
             <h2 id="summary-income" class="text-xs md:text-sm font-extrabold text-emerald-800 dark:text-emerald-200 mt-0.5">Rs 0</h2>
@@ -106,7 +105,6 @@
             <h2 id="summary-expense" class="text-xs md:text-sm font-extrabold text-blue-800 dark:text-blue-200 mt-0.5">Rs 0</h2>
         </div>
 
-        <!-- तल्लो २ वटा कार्डहरू -->
         <div class="bg-rose-50 dark:bg-rose-950/40 p-2.5 rounded-xl border border-rose-200 dark:border-rose-900/50" style="grid-column: span 1.5 / span 1.5;">
             <p class="text-[9px] text-rose-700 dark:text-rose-400 font-bold uppercase tracking-wider">Receivable </p>
             <h2 id="summary-receivable" class="text-xs md:text-sm font-extrabold text-rose-800 dark:text-rose-200 mt-0.5">Rs 0</h2>
@@ -560,13 +558,7 @@
     }
 
     function applyGlobalFilters() { refreshAll(); }
-    function clearDateFilter() {
-        document.getElementById('filter-type').value = 'All';
-        document.getElementById('filter-from-date').value = '';
-        document.getElementById('filter-to-date').value = '';
-        refreshAll();
-    }
-
+    
     function getDateFilteredData(data) {
         const filterType = document.getElementById('filter-type').value;
         const fromDate = document.getElementById('filter-from-date').value;
@@ -770,7 +762,7 @@
         const address = localStorage.getItem('profile_address');
         const photo = localStorage.getItem('profile_photo');
 
-        let headerHTML = `
+        return `
             <div class="pdf-header" style="display: flex; justify-content: center; align-items: center; border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 15px; font-family: sans-serif; gap: 15px;">
                 <div class="header-left">
                     ${photo ? `<img src="${photo}" alt="Logo" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%;">` : ''}
@@ -781,32 +773,70 @@
                 </div>
             </div>
         `;
-        return headerHTML;
     }
 
     function getProfilePDFFooter() {
         const phone = localStorage.getItem('profile_phone');
         const email = localStorage.getItem('profile_email');
 
-        let footerHTML = `
+        return `
             <div class="pdf-footer" style="border-top: 1px solid #ddd; padding-top: 10px; margin-top: 20px; font-family: sans-serif; text-align: center; font-size: 11px; color: #666;">
                 ${phone ? `<span>Phone: ${phone}</span>` : ''}
                 ${phone && email ? ` &nbsp;|&nbsp; ` : ''}
                 ${email ? `<span>Email: ${email}</span>` : ''}
             </div>
         `;
-        return footerHTML;
     }
 
+    // १. ग्लोबल फिल्टर गरिएको क्यासफ्लो डाटामा आधारित PDF
+    function exportCashflowPDF() {
+        const profileHeader = getProfilePDFHeader();
+        const profileFooter = getProfilePDFFooter();
+        
+        const filteredSavings = getDateFilteredData(savings);
+        let cashflowHTML = '';
+        let totalSum = 0;
+
+        filteredSavings.forEach(s => {
+            totalSum += s.amount;
+            cashflowHTML += `
+                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 11px;">
+                    <div><strong>${s.title}</strong> <span style="color: #666; font-size: 10px;">(${s.category} - ${s.date})</span></div>
+                    <div style="font-weight: bold; color: #d97706;">Rs ${s.amount.toLocaleString()}</div>
+                </div>
+            `;
+        });
+
+        if(filteredSavings.length === 0) {
+            cashflowHTML = `<p style="text-align: center; color: #888; font-size: 11px;">No cashflow records found for selected filter.</p>`;
+        }
+
+        const finalHTML = `
+            <div style="padding: 20px; font-family: sans-serif;">
+                ${profileHeader}
+                <h2 style="text-align: center; font-size: 14px; margin-bottom: 15px; color: #333;">Cashflow Ledger Report</h2>
+                <div style="margin-bottom: 10px;">${cashflowHTML}</div>
+                <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 8px; border-top: 1px solid #333; font-size: 12px; font-weight: bold;">
+                    <span>Total Cashflow:</span>
+                    <span style="color: #d97706;">Rs ${totalSum.toLocaleString()}</span>
+                </div>
+                ${profileFooter}
+            </div>
+        `;
+
+        html2pdf().from(finalHTML).save('cashflow-ledger.pdf');
+    }
+
+    // २. पार्टी अकाउन्ट्स र लेजरको PDF
     function exportPartyAccountPDF() {
         const profileHeader = getProfilePDFHeader();
         const profileFooter = getProfilePDFFooter();
         const partyContent = document.getElementById('party-ledger-id').innerHTML;
 
         const finalHTML = `
-            <div style="padding: 20px;">
+            <div style="padding: 20px; font-family: sans-serif;">
                 ${profileHeader}
-                <h2 style="text-align: center; font-size: 14px; margin-bottom: 10px;">Party Account Ledger</h2>
+                <h2 style="text-align: center; font-size: 14px; margin-bottom: 15px; color: #333;">Party Account Ledger</h2>
                 ${partyContent}
                 ${profileFooter}
             </div>
@@ -815,33 +845,38 @@
         html2pdf().from(finalHTML).save('party-account.pdf');
     }
 
-    function exportSavingPDF() {
-        const profileHeader = getProfilePDFHeader();
-        const profileFooter = getProfilePDFFooter();
-        const savingContent = document.getElementById('saving-table-id').innerHTML;
-
-        const finalHTML = `
-            <div style="padding: 20px;">
-                ${profileHeader}
-                <h2 style="text-align: center; font-size: 14px; margin-bottom: 10px;">Saving Report</h2>
-                ${savingContent}
-                ${profileFooter}
-            </div>
-        `;
-
-        html2pdf().from(finalHTML).save('saving-report.pdf');
-    }
-
+    // ३. फिल्टर गरिएको इन्कम रिपोर्टको PDF
     function exportIncomePDF() {
         const profileHeader = getProfilePDFHeader();
         const profileFooter = getProfilePDFFooter();
-        const incomeContent = document.getElementById('income-table-id').innerHTML;
+        
+        const filteredIncomes = getDateFilteredData(incomes);
+        let incomeHTML = '';
+        let totalSum = 0;
+
+        filteredIncomes.forEach(i => {
+            totalSum += i.amount;
+            incomeHTML += `
+                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 11px;">
+                    <div><strong>${i.name}</strong> <span style="color: #666; font-size: 10px;">(${i.date})</span></div>
+                    <div style="font-weight: bold; color: #059669;">Rs ${i.amount.toLocaleString()}</div>
+                </div>
+            `;
+        });
+
+        if(filteredIncomes.length === 0) {
+            incomeHTML = `<p style="text-align: center; color: #888; font-size: 11px;">No income records found for selected filter.</p>`;
+        }
 
         const finalHTML = `
-            <div style="padding: 20px;">
+            <div style="padding: 20px; font-family: sans-serif;">
                 ${profileHeader}
-                <h2 style="text-align: center; font-size: 14px; margin-bottom: 10px;">Income Source Report</h2>
-                ${incomeContent}
+                <h2 style="text-align: center; font-size: 14px; margin-bottom: 15px; color: #333;">Income Source Report</h2>
+                <div style="margin-bottom: 10px;">${incomeHTML}</div>
+                <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 8px; border-top: 1px solid #333; font-size: 12px; font-weight: bold;">
+                    <span>Total Income:</span>
+                    <span style="color: #059669;">Rs ${totalSum.toLocaleString()}</span>
+                </div>
                 ${profileFooter}
             </div>
         `;
@@ -849,21 +884,43 @@
         html2pdf().from(finalHTML).save('income-report.pdf');
     }
 
-    function exportCashflowPDF() {
+    // ४. फिल्टर गरिएको सेभिङ रिपोर्टको PDF
+    function exportSavingPDF() {
         const profileHeader = getProfilePDFHeader();
         const profileFooter = getProfilePDFFooter();
-        const cashflowContent = document.getElementById('savings-list-container').innerHTML;
+        
+        const filteredSavings = getDateFilteredData(savings);
+        let savingHTML = '';
+        let totalSum = 0;
+
+        filteredSavings.forEach(s => {
+            totalSum += s.amount;
+            savingHTML += `
+                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 11px;">
+                    <div><strong>${s.title}</strong> <span style="color: #666; font-size: 10px;">(${s.category} - ${s.date})</span></div>
+                    <div style="font-weight: bold; color: #d97706;">Rs ${s.amount.toLocaleString()}</div>
+                </div>
+            `;
+        });
+
+        if(filteredSavings.length === 0) {
+            savingHTML = `<p style="text-align: center; color: #888; font-size: 11px;">No saving records found for selected filter.</p>`;
+        }
 
         const finalHTML = `
-            <div style="padding: 20px;">
+            <div style="padding: 20px; font-family: sans-serif;">
                 ${profileHeader}
-                <h2 style="text-align: center; font-size: 14px; margin-bottom: 10px;">Cashflow Ledger Report</h2>
-                ${cashflowContent}
+                <h2 style="text-align: center; font-size: 14px; margin-bottom: 15px; color: #333;">Saving Report</h2>
+                <div style="margin-bottom: 10px;">${savingHTML}</div>
+                <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 8px; border-top: 1px solid #333; font-size: 12px; font-weight: bold;">
+                    <span>Total Saving:</span>
+                    <span style="color: #d97706;">Rs ${totalSum.toLocaleString()}</span>
+                </div>
                 ${profileFooter}
             </div>
         `;
 
-        html2pdf().from(finalHTML).save('cashflow-ledger.pdf');
+        html2pdf().from(finalHTML).save('saving-report.pdf');
     }
 
     refreshAll();
