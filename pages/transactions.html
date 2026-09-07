@@ -4,86 +4,97 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Family Protected Ledger - Secure QR</title>
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- QR Code Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- HTML5 QR Code Scanner Library for real camera & gallery upload -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body class="bg-slate-900 text-white flex items-center justify-center min-h-screen">
 
     <div class="bg-slate-800 p-5 rounded-2xl shadow-xl w-full max-w-xs border border-slate-700">
-        <!-- टगल ट्याबहरू -->
+        <!-- टगल ट्याबहरू (जेनेरेट र स्क्यान एकै ठाउँमा) / Toggle Tabs -->
         <div class="flex bg-slate-900 p-1 rounded-xl mb-4">
-            <button id="tabGenerate" onclick="switchTab('generate')" class="flex-1 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition-all">जेनेरेट</button>
-            <button id="tabScan" onclick="switchTab('scan')" class="flex-1 py-1.5 text-xs font-semibold rounded-lg text-slate-400 transition-all">स्क्यान</button>
+            <button id="tabGenerate" onclick="switchTab('generate')" class="flex-1 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition-all">जेनेरेट / Generate</button>
+            <button id="tabScan" onclick="switchTab('scan')" class="flex-1 py-1.5 text-xs font-semibold rounded-lg text-slate-400 transition-all">स्क्यान / Scan</button>
         </div>
 
-        <!-- १. जेनेरेट सेक्सन -->
+        <!-- १. जेनेरेट सेक्सन / Generate Section -->
         <div id="generateSection" class="space-y-3">
-            <div class="text-center bg-slate-900 p-3 rounded-xl border border-slate-700">
-                <div id="qrcode" class="bg-white p-2 rounded-lg inline-block min-h-[140px] min-w-[140px] flex items-center justify-center text-slate-900">
-                    <span class="text-[11px] text-slate-400">QR यहाँ देखिनेछ</span>
+            <div class="text-center bg-slate-900 p-3 rounded-xl border border-slate-700 relative">
+                <!-- QR कन्टेनर र बिचमा गोलाकार फोटो (N1512.png) -->
+                <div id="qrcodeWrapper" class="relative inline-block bg-white p-2 rounded-lg">
+                    <div id="qrcode" class="flex items-center justify-center min-h-[130px] min-w-[130px]">
+                        <span class="text-[11px] text-slate-400">QR यहाँ देखिनेछ</span>
+                    </div>
+                    <!-- गोलाकार प्रोफाइल फोटो (Center Circular Image N1512.png) -->
+                    <div id="centerLogo" class="absolute inset-0 m-auto w-10 h-10 rounded-full border-2 border-white bg-slate-200 overflow-hidden hidden shadow-md flex items-center justify-center">
+                        <img src="N1512.png" alt="Family" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/40'">
+                    </div>
                 </div>
-                <div id="timerDisplay" class="text-[11px] text-amber-400 font-mono mt-2 hidden">म्याद सकिन बाँकी: <span id="countdown">02:00</span></div>
-            </div>
-            <button onclick="generateSecureQR()" class="w-full bg-indigo-600 hover:bg-indigo-500 py-2 rounded-xl text-xs font-medium transition-all">सुरक्षित QR बनाउनुहोस्</button>
-        </div>
-
-        <!-- २. स्क्यान सेक्सन (बीचमा राउण्ड फोटो सहित) -->
-        <div id="scanSection" class="space-y-3 hidden">
-            <div class="relative bg-black rounded-xl overflow-hidden h-[156px] flex items-center justify-center border border-slate-700">
-                <!-- वास्तविक क्यामेरा भिडियो स्ट्रिम देखाउनको लागि -->
-                <video id="cameraStream" class="absolute inset-0 w-full h-full object-cover hidden" autoplay playsinline></video>
-                
-                <!-- बीचमा रूट (Root) बाट फोटो राख्ने (Round) -->
-                <div class="absolute z-10 w-12 h-12 rounded-full border-2 border-indigo-500 overflow-hidden bg-slate-800 flex items-center justify-center shadow-lg">
-                    <img src="N1024.png" alt="Profile" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/48'">
-                </div>
-
-                <div id="scannerView" class="text-center p-2 z-0">
-                    <span class="text-[11px] text-slate-400">स्क्यानिङ क्यामेरा बन्द छ</span>
-                </div>
+                <div id="timerDisplay" class="text-[11px] text-amber-400 font-mono mt-2 hidden">म्याद सकिन बाँकी / Expires in: <span id="countdown">02:00</span></div>
             </div>
             
-            <div class="flex gap-2">
-                <button onclick="startRealCamera()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 py-2 rounded-xl text-xs font-medium transition-all">क्यामेरा खोल्नुहोस्</button>
-                <!-- ग्यालरीबाट लोड गर्ने बटन -->
-                <label class="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded-xl text-xs font-medium text-center cursor-pointer transition-all flex items-center justify-center">
-                    ग्यालरीबाट लोड
-                    <input type="file" accept="image/*" class="hidden" onchange="loadFromGallery(event)">
-                </label>
-            </div>
-        </div>
-
-        <!-- ३. प्रतिक्रिया सन्देश र सेयर बटन सेक्सन -->
-        <div id="feedbackContainer" class="mt-3 hidden">
-            <div id="feedbackMsg" class="p-2 rounded-xl text-[11px] text-center mb-2"></div>
-            <button id="shareBtn" onclick="shareQRData()" class="w-full bg-sky-600 hover:bg-sky-500 py-1.5 rounded-xl text-xs font-medium transition-all hidden flex items-center justify-center gap-1">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
-                QR सेयर गर्नुहोस्
+            <!-- मुख्य जेनेरेट बटन -->
+            <button onclick="generateSecureQR()" class="w-full bg-indigo-600 hover:bg-indigo-500 py-2 rounded-xl text-xs font-medium transition-all">सुरक्षित QR बनाउनुहोस् / Generate QR</button>
+            
+            <!-- ३. सेयर योर फ्यामिली बटन (Share your family icon) -->
+            <button onclick="shareFamilyQR()" id="shareBtn" class="w-full bg-slate-700 hover:bg-slate-600 py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center space-x-2 hidden">
+                <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                <span>Share Your Family</span>
             </button>
         </div>
+
+        <!-- २ & ४. स्क्यान सेक्सन (वास्तविक क्यामेरा र ग्यालरी अपलोड) / Scan & Gallery Section -->
+        <div id="scanSection" class="space-y-3 hidden">
+            <!-- वास्तविक क्यामेरा देखाउने ठाउँ (Real Camera Viewport) -->
+            <div class="relative bg-black rounded-xl overflow-hidden min-h-[160px] flex flex-col items-center justify-center border border-slate-700">
+                <div id="reader" class="w-full"></div>
+                <div id="scannerPlaceholder" class="text-center p-4">
+                    <svg class="w-8 h-8 mx-auto text-slate-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
+                    <span class="text-[11px] text-slate-400">क्यामेरा बन्द छ / Camera is off</span>
+                </div>
+            </div>
+
+            <!-- स्क्यान गर्ने कन्ट्रोल बटनहरू -->
+            <div class="flex space-x-2">
+                <button onclick="startRealScanner()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 py-2 rounded-xl text-xs font-medium transition-all">स्क्यान सुरु गर्नुहोस् / Start Scan</button>
+                <button onclick="stopRealScanner()" class="bg-rose-600 hover:bg-rose-500 px-3 py-2 rounded-xl text-xs font-medium transition-all">बन्द / Stop</button>
+            </div>
+
+            <!-- ४. ग्यालरीबाट QR कोड लोड गर्ने अप्सन (Upload from Gallery) -->
+            <label class="w-full bg-slate-700 hover:bg-slate-600 py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center space-x-2 cursor-pointer">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span>ग्यालरीबाट QR लोड गर्नुहोस् / From Gallery</span>
+                <input type="file" id="qrFileInput" accept="image/*" class="hidden" onchange="scanImageFromFile(event)">
+            </label>
+        </div>
+
+        <!-- प्रतिक्रिया सन्देश / Feedback Message Box -->
+        <div id="feedbackMsg" class="mt-3 p-2 rounded-xl text-[11px] text-center hidden"></div>
+        <!-- स्क्यान गरेको नतिजा देखाउने ठाउँ / Scan Result Display -->
+        <div id="scanResult" class="mt-2 p-2 bg-slate-900 rounded-xl text-[11px] text-indigo-300 text-center hidden"></div>
     </div>
 
     <script>
         let timerInterval;
-        let currentToken = "";
+        let html5QrCode;
 
         function switchTab(mode) {
             const genSec = document.getElementById('generateSection');
             const scanSec = document.getElementById('scanSection');
             const tabGen = document.getElementById('tabGenerate');
             const tabScan = document.getElementById('tabScan');
-            document.getElementById('feedbackContainer').classList.add('hidden');
-
-            // ट्याब फेर्दा क्यामेरा बन्द गर्ने
-            stopCamera();
+            const feedback = document.getElementById('feedbackMsg');
+            feedback.classList.add('hidden');
 
             if (mode === 'generate') {
                 genSec.classList.remove('hidden');
                 scanSec.classList.add('hidden');
                 tabGen.className = "flex-1 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition-all";
                 tabScan.className = "flex-1 py-1.5 text-xs font-semibold rounded-lg text-slate-400 transition-all";
+                stopRealScanner();
             } else {
                 genSec.classList.add('hidden');
                 scanSec.classList.remove('hidden');
@@ -96,16 +107,22 @@
             const qrcodeContainer = document.getElementById('qrcode');
             qrcodeContainer.innerHTML = ""; 
             
-            currentToken = "ENC_TOKEN_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now();
+            const secureToken = "FAMILY_LEDGER_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now();
             
             new QRCode(qrcodeContainer, {
-                text: currentToken,
+                text: secureToken,
                 width: 130,
-                height: 130
+                height: 130,
+                correctLevel: QRCode.CorrectLevel.H // उच्च लेभल ताकी बिचमा फोटो राख्दा पनि QR स्क्यान होस्
             });
 
+            // १. बिचमा गोलाकार फोटो देखाउने (Show center circular image N1512.png)
+            document.getElementById('centerLogo').classList.remove('hidden');
+            // ३. सेयर बटन देखाउने (Show Share Family button)
+            document.getElementById('shareBtn').classList.remove('hidden');
+
             startCountdown(120);
-            showFeedback("QR कोड सफलताપूर्वक जेनेरेट भयो!", "success", true);
+            showFeedback("QR कोड सफलताપूर्वक जेनेरेट भयो! / QR Generated Successfully!", "success");
         }
 
         function startCountdown(duration) {
@@ -126,73 +143,99 @@
 
                 if (--timer < 0) {
                     clearInterval(timerInterval);
-                    document.getElementById('qrcode').innerHTML = '<span class="text-[11px] text-red-400 font-semibold">म्याद समाप्त भयो!</span>';
+                    document.getElementById('qrcode').innerHTML = '<span class="text-[11px] text-red-400 font-semibold">म्याद समाप्त भयो! / Expired!</span>';
+                    document.getElementById('centerLogo').classList.add('hidden');
                     timerDisplay.classList.add('hidden');
-                    showFeedback("सुरक्षाका कारण QR को म्याद सकियो।", "error", false);
+                    document.getElementById('shareBtn').classList.add('hidden');
+                    showFeedback("सुरक्षाका कारण QR को म्याद सकियो। / QR Expired.", "error");
                 }
             }, 1000);
         }
 
-        // वास्तविक क्यामेरा सुरु गर्ने फंक्सन
-        async function startRealCamera() {
-            const video = document.getElementById('cameraStream');
-            const scannerView = document.getElementById('scannerView');
-            
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                video.srcObject = stream;
-                video.classList.remove('hidden');
-                scannerView.innerHTML = '';
-                showFeedback("वास्तविक क्यामेरा चालु भयो।", "success", false);
-            } catch (err) {
-                showFeedback("क्यामेरा अनुमति मिलेन वा उपलब्ध छैन।", "error", false);
-            }
-        }
-
-        function stopCamera() {
-            const video = document.getElementById('cameraStream');
-            if (video.srcObject) {
-                let tracks = video.srcObject.getTracks();
-                tracks.forEach(track => track.stop());
-                video.srcObject = null;
-                video.classList.add('hidden');
-            }
-        }
-
-        // ग्यालरीबाट फोटो लोड गर्ने फंक्सन
-        function loadFromGallery(event) {
-            const file = event.target.files[0];
-            if (file) {
-                showFeedback("ग्यालरीबाट फाइल सफल रूपमा लोड भयो। स्क्यान गर्दै...", "success", false);
-                // यहाँ ग्यालरीको इमेज डिकोड गर्ने लजिक थप्न सकिन्छ
-            }
-        }
-
-        function shareQRData() {
+        // ३. सेयर योर फ्यामिली फिचर (Share Functionality)
+        async function shareFamilyQR() {
             if (navigator.share) {
-                navigator.share({
-                    title: 'Family Protected Ledger',
-                    text: 'मेरो सुरक्षित QR टोकन: ' + currentToken,
-                }).catch((error) => console.log('Sharing failed', error));
+                try {
+                    await navigator.share({
+                        title: 'Family Protected Ledger',
+                        text: 'मेरो Family Protected Ledger को सुरक्षित QR कोड स्क्यान गर्नुहोस्:',
+                        url: window.location.href
+                    });
+                } catch (err) {
+                    console.log('Sharing failed', err);
+                }
             } else {
-                alert("तपाईको ब्राउजरमा सेयर फिचर उपलब्ध छैन। टोकन: " + currentToken);
+                alert("तपाईको ब्राउजरमा सेयर फिचर उपलब्ध छैन। / Share not supported.");
             }
         }
 
-        function showFeedback(message, type, showShare) {
-            const container = document.getElementById('feedbackContainer');
-            const fb = document.getElementById('feedbackMsg');
-            const shareBtn = document.getElementById('shareBtn');
+        // २. वास्तविक क्यामेरा स्क्यानर सुरु गर्ने (Start Real Camera Scanner)
+        function startRealScanner() {
+            const placeholder = document.getElementById('scannerPlaceholder');
+            placeholder.style.display = 'none';
             
-            container.classList.remove('hidden');
-            fb.className = "p-2 rounded-xl text-[11px] text-center mb-2 " + (type === 'success' ? 'bg-emerald-950 text-emerald-300' : 'bg-red-950 text-red-300');
-            fb.textContent = message;
-
-            if (showShare) {
-                shareBtn.classList.remove('hidden');
-            } else {
-                shareBtn.classList.add('hidden');
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
             }
+
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 120, height: 120 } },
+                (decodedText, decodedResult) => {
+                    document.getElementById('scanResult').classList.remove('hidden');
+                    document.getElementById('scanResult').textContent = "स्क्यान सफल / Scanned: " + decodedText;
+                    showFeedback("QR सफलतापूर्वक स्क्यान भयो! / Scan Successful!", "success");
+                    stopRealScanner();
+                },
+                (errorMessage) => {
+                    // स्क्यान गर्ने क्रममा निरन्तर एरर नदेखाई चुपचाप बस्ने
+                }
+            ).catch((err) => {
+                showFeedback("क्यामेरा खोल्न सकिएन। / Cannot open camera.", "error");
+                placeholder.style.display = 'block';
+            });
+            
+            showFeedback("वास्तविक क्यामेरा चालू भयो... / Camera active...", "success");
+        }
+
+        function stopRealScanner() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    document.getElementById('scannerPlaceholder').style.display = 'block';
+                }).catch(err => {
+                    console.log("Stop failed", err);
+                });
+            } else {
+                document.getElementById('scannerPlaceholder').style.display = 'block';
+            }
+        }
+
+        // ४. ग्यालरीबाट QR लोड गरी स्क्यान गर्ने (Scan QR from Gallery File)
+        function scanImageFromFile(e) {
+            if (e.target.files.length === 0) return;
+            const imageFile = e.target.files[0];
+            
+            const html5QrCodeFromFile = new Html5Qrcode("reader");
+            html5QrCodeFromFile.scanFile(imageFile, true)
+                .then(decodedText => {
+                    document.getElementById('scanResult').classList.remove('hidden');
+                    document.getElementById('scanResult').textContent = "ग्यालरी स्क्यान सफल: " + decodedText;
+                    showFeedback("ग्यालरीबाट QR पढियो! / QR loaded from gallery!", "success");
+                })
+                .catch(err => {
+                    showFeedback("QR फेला परेन वा अवैध छ। / QR not found in image.", "error");
+                });
+        }
+
+        function showFeedback(message, type) {
+            const fb = document.getElementById('feedbackMsg');
+            fb.classList.remove('hidden', 'bg-emerald-950', 'text-emerald-300', 'bg-red-950', 'text-red-300');
+            if (type === 'success') {
+                fb.classList.add('bg-emerald-950', 'text-emerald-300');
+            } else {
+                fb.classList.add('bg-red-950', 'text-red-300');
+            }
+            fb.textContent = message;
         }
     </script>
 </body>
