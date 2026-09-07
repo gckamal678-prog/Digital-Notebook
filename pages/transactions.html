@@ -3,186 +3,339 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Family Protected Ledger - Secure QR</title>
-    <!-- Tailwind CSS CDN -->
+    <title>Family Protected Ledger & QR Sync</title>
+    <!-- Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- QR Code Library -->
+    <!-- QRCode Generator Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- HTML5 QR Code Scanner Library for real camera & gallery upload -->
+    <!-- HTML5 QR Code Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <!-- Cropper.js CSS & JS for gallery image cropping and zooming -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 </head>
-<body class="bg-slate-900 text-white flex items-center justify-center min-h-screen">
+<body class="bg-gray-950 text-white min-h-screen p-4">
 
-    <div class="bg-slate-800 p-5 rounded-2xl shadow-xl w-full max-w-xs border border-slate-700">
-        <!-- Toggle Tabs -->
-        <div class="flex bg-slate-900 p-1 rounded-xl mb-4">
-            <button id="tabGenerate" onclick="switchTab('generate')" class="flex-1 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition-all">Generate</button>
-            <button id="tabScan" onclick="switchTab('scan')" class="flex-1 py-1.5 text-xs font-semibold rounded-lg text-slate-400 transition-all">Scan</button>
-        </div>
-
-        <!-- 1. Generate Section -->
-        <div id="generateSection" class="space-y-3">
-            <div class="text-center bg-slate-900 p-3 rounded-xl border border-slate-700 relative">
-                <div id="qrcodeWrapper" class="relative inline-block bg-white p-2 rounded-lg">
-                    <div id="qrcode" class="flex items-center justify-center min-h-[130px] min-w-[130px]">
-                        <span class="text-[11px] text-slate-400">QR will appear here</span>
-                    </div>
-                    <!-- Center Circular Image -->
-                    <div id="centerLogo" class="absolute inset-0 m-auto w-10 h-10 rounded-full border-2 border-white bg-slate-200 overflow-hidden hidden shadow-md flex items-center justify-center">
-                        <img src="N1512.png" alt="Family" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/40'">
-                    </div>
-                </div>
-                <div id="timerDisplay" class="text-[11px] text-amber-400 font-mono mt-2 hidden">Expires in: <span id="countdown">02:00</span></div>
-            </div>
-            
-            <button onclick="generateSecureQR()" class="w-full bg-indigo-600 hover:bg-indigo-500 py-2 rounded-xl text-xs font-medium transition-all">Generate QR</button>
-            
-            <!-- Share Family Button -->
-            <button onclick="shareFamilyQR()" id="shareBtn" class="w-full bg-slate-700 hover:bg-slate-600 py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center space-x-2 hidden">
-                <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-                <span>Share Your Family</span>
-            </button>
-        </div>
-
-        <!-- 2. Scan Section -->
-        <div id="scanSection" class="space-y-3 hidden">
-            <!-- Camera Viewport -->
-            <div class="relative bg-black rounded-xl overflow-hidden h-[140px] flex items-center justify-center border border-slate-700">
-                <div id="reader" class="w-full h-full"></div>
-                <div id="scannerPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center text-center p-2">
-                    <svg class="w-6 h-6 text-slate-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
-                    <span class="text-[10px] text-slate-400">Camera is off</span>
-                </div>
-            </div>
-
-            <!-- Scanner Controls -->
-            <div class="flex space-x-2">
-                <button onclick="startRealScanner()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 py-1.5 rounded-xl text-xs font-medium transition-all">Start Scan</button>
-                <button onclick="stopRealScanner()" class="bg-rose-600 hover:bg-rose-500 px-3 py-1.5 rounded-xl text-xs font-medium transition-all">Stop</button>
-            </div>
-
-            <!-- Gallery Upload Option -->
-            <label class="w-full bg-slate-700 hover:bg-slate-600 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center justify-center space-x-2 cursor-pointer">
-                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                <span>From Gallery</span>
-                <input type="file" id="qrFileInput" accept="image/*" class="hidden" onchange="scanImageFromFile(event)">
-            </label>
-
-            <!-- Manual Token Input Section -->
-            <div class="flex space-x-1 pt-1">
-                <input type="text" id="manualTokenInput" placeholder="Type token here..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-indigo-500">
-                <button onclick="verifyManualToken()" class="bg-indigo-600 hover:bg-indigo-500 px-3 py-1.5 rounded-xl text-xs font-medium transition-all">OK</button>
-            </div>
-        </div>
+    <div class="max-w-md mx-auto space-y-6">
+        <!-- App Header -->
+        <header class="text-center">
+            <h1 class="text-2xl font-bold text-emerald-400">Family Protected Ledger</h1>
+            <p class="text-xs text-gray-400">Transparent & Secure Cloud Sync System</p>
+        </header>
 
         <!-- Feedback Message Box -->
-        <div id="feedbackMsg" class="mt-3 p-2 rounded-xl text-[11px] text-center hidden"></div>
-        <!-- Scan Result Display -->
-        <div id="scanResult" class="mt-2 p-2 bg-slate-900 rounded-xl text-[11px] text-indigo-300 text-center hidden"></div>
+        <div id="feedbackMsg" class="hidden p-3 rounded text-center font-medium text-sm"></div>
+
+        <!-- 1. Generate & Share QR Section -->
+        <div class="p-4 bg-gray-900 border border-gray-800 rounded-xl text-center shadow-lg">
+            <h2 class="text-md font-bold mb-3 text-emerald-300">Generate Your Family QR</h2>
+            <p class="text-xs text-gray-400 mb-4">Share this secure QR code with your family member to sync your ledger data.</p>
+            
+            <div class="flex justify-center my-3">
+                <div id="qrcode" class="bg-white p-3 rounded-lg inline-block"></div>
+            </div>
+            
+            <div class="flex flex-col gap-2 mt-4">
+                <button onclick="generateSecureQR()" class="w-full bg-blue-600 hover:bg-blue-700 py-2.5 rounded-lg font-bold text-sm transition">
+                    Generate Secure QR
+                </button>
+                
+                <button id="shareBtn" onclick="shareFamilyQR()" class="hidden w-full bg-emerald-600 hover:bg-emerald-700 py-2.5 rounded-lg font-bold text-sm transition">
+                    Share QR Token
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. Scanner Section (Live Camera & Gallery Crop/Zoom) -->
+        <div class="p-4 bg-gray-900 border border-gray-800 rounded-xl text-center shadow-lg">
+            <h2 class="text-md font-bold mb-3 text-emerald-300">Scan Family Ledger QR</h2>
+            <p class="text-xs text-gray-400 mb-4">Scan using your camera or upload/crop an image from your gallery.</p>
+            
+            <!-- Hidden File Input for Gallery -->
+            <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="scanImageFromFile(event)">
+
+            <!-- Camera Viewfinder -->
+            <div id="reader" class="w-full overflow-hidden rounded-lg bg-black mb-3"></div>
+            
+            <div id="scannerPlaceholder" class="p-6 bg-gray-800 rounded-lg my-2 flex justify-center items-center">
+                <p class="text-gray-400 text-sm">Camera is currently inactive</p>
+            </div>
+            
+            <div id="scannerLoading" class="hidden my-2 text-yellow-400 text-sm font-medium animate-pulse">
+                Initializing camera, please wait...
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mt-4">
+                <button onclick="startRealScanner()" class="bg-indigo-600 hover:bg-indigo-700 py-2.5 rounded-lg font-bold text-sm transition">
+                    Start Camera
+                </button>
+                <button onclick="stopRealScanner()" class="bg-red-600 hover:bg-red-700 py-2.5 rounded-lg font-bold text-sm transition">
+                    Stop Camera
+                </button>
+            </div>
+
+            <button onclick="document.getElementById('fileInput').click()" class="w-full mt-2 bg-purple-600 hover:bg-purple-700 py-2.5 rounded-lg font-bold text-sm transition">
+                Scan Image from Gallery (Zoom/Crop)
+            </button>
+        </div>
     </div>
 
-    <script>
-        let timerInterval;
-        let html5QrCode;
+    <!-- Cropper.js Modal for Gallery Images -->
+    <div id="cropperModal" style="display:none;" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+        <div class="bg-gray-900 border border-gray-800 p-4 rounded-xl max-w-sm w-full text-white">
+            <h3 class="text-md font-bold mb-1 text-emerald-400">Crop & Zoom QR Code</h3>
+            <p class="text-xs text-gray-400 mb-3">Adjust the box to focus tightly on the QR code.</p>
+            
+            <div class="max-h-64 overflow-hidden bg-black rounded flex justify-center items-center">
+                <img id="imageToCrop" src="" class="max-w-full">
+            </div>
+            
+            <div class="flex gap-2 mt-4">
+                <button onclick="closeCropper()" class="w-1/2 bg-gray-700 hover:bg-gray-600 py-2 rounded text-xs font-bold transition">Cancel</button>
+                <button onclick="performCroppedScan()" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 py-2 rounded text-xs font-bold transition">Crop & Scan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Embedded JavaScript Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyDDY_v7RHnkCTI6uyV4DNDjqoaIBGweg8c",
+          authDomain: "digital-a2552.firebaseapp.com",
+          projectId: "digital-a2552",
+          storageBucket: "digital-a2552.firebasestorage.app",
+          messagingSenderId: "218135618179",
+          appId: "1:218135618179:web:821b76920d3e5669ac31b6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const CURRENT_USER_ID = localStorage.getItem('my_unique_userid') || "user_" + Math.random().toString(36).substring(2, 8);
+        localStorage.setItem('my_unique_userid', CURRENT_USER_ID);
+
+        let html5QrCode = null;
         let lastGeneratedToken = "";
+        let cropperInstance = null;
 
-        function switchTab(mode) {
-            const genSec = document.getElementById('generateSection');
-            const scanSec = document.getElementById('scanSection');
-            const tabGen = document.getElementById('tabGenerate');
-            const tabScan = document.getElementById('tabScan');
-            const feedback = document.getElementById('feedbackMsg');
-            feedback.classList.add('hidden');
-
-            if (mode === 'generate') {
-                genSec.classList.remove('hidden');
-                scanSec.classList.add('hidden');
-                tabGen.className = "flex-1 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition-all";
-                tabScan.className = "flex-1 py-1.5 text-xs font-semibold rounded-lg text-slate-400 transition-all";
-                stopRealScanner();
-            } else {
-                genSec.classList.add('hidden');
-                scanSec.classList.remove('hidden');
-                tabScan.className = "flex-1 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white transition-all";
-                tabGen.className = "flex-1 py-1.5 text-xs font-semibold rounded-lg text-slate-400 transition-all";
+        // Cloud Backup Function
+        window.backupToCloud = async function() {
+            try {
+                const localData = {
+                    notes: JSON.parse(localStorage.getItem('advanced_notebook_notes') || '[]'),
+                    theme: localStorage.getItem('theme') || 'dark',
+                    language: localStorage.getItem('language') || 'en',
+                    currency: localStorage.getItem('currency') || 'NPR',
+                    updatedAt: new Date().toISOString()
+                };
+                await set(ref(db, 'users/' + CURRENT_USER_ID), localData);
+                return { success: true, message: "Cloud backup successful!" };
+            } catch (error) {
+                return { success: false, message: error.message };
             }
-        }
+        };
 
-        function generateSecureQR() {
+        // Cloud Restore/Sync Function
+        window.restoreFromCloud = async function(userIdToFetch = CURRENT_USER_ID) {
+            try {
+                const dbRef = ref(db);
+                const snapshot = await get(child(dbRef, `users/${userIdToFetch}`));
+                
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    if (data.notes) localStorage.setItem('advanced_notebook_notes', JSON.stringify(data.notes));
+                    if (data.theme) localStorage.setItem('theme', data.theme);
+                    if (data.language) localStorage.setItem('language', data.language);
+                    if (data.currency) localStorage.setItem('currency', data.currency);
+                    return { success: true, message: "Data synchronized successfully!" };
+                } else {
+                    return { success: false, message: "No backup found in cloud!" };
+                }
+            } catch (error) {
+                return { success: false, message: error.message };
+            }
+        };
+
+        // Secure QR Generation
+        window.generateSecureQR = function() {
             const qrcodeContainer = document.getElementById('qrcode');
+            if (!qrcodeContainer) return;
             qrcodeContainer.innerHTML = ""; 
             
-            const currentUserId = "user_id";
-            const uniqueHash = Math.random().toString(36).substring(2, 9) + Math.random().toString(36).substring(2, 9);
-            const secureToken = `LEDGER_${currentUserId}_${Date.now()}_${uniqueHash}`;
-            
+            const uniqueHash = Math.random().toString(36).substring(2, 8);
+            const secureToken = `LEDGER_SYNC_${CURRENT_USER_ID}_${Date.now()}_${uniqueHash}`;
             lastGeneratedToken = secureToken;
 
-            new QRCode(qrcodeContainer, {
-                text: secureToken,
-                width: 130,
-                height: 130,
-                correctLevel: QRCode.CorrectLevel.H
-            });
+            if (typeof QRCode !== 'undefined') {
+                new QRCode(qrcodeContainer, {
+                    text: secureToken,
+                    width: 140,
+                    height: 140,
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }
 
-            document.getElementById('centerLogo').classList.remove('hidden');
-            document.getElementById('shareBtn').classList.remove('hidden');
+            const shareBtn = document.getElementById('shareBtn');
+            if (shareBtn) shareBtn.classList.remove('hidden');
+            showFeedback("Secure Family QR generated successfully!", "success");
+        };
 
-            startCountdown(120);
-            showFeedback("QR Generated Successfully!", "success");
-        }
-
-        function startCountdown(duration) {
-            clearInterval(timerInterval);
-            let timer = duration, minutes, seconds;
-            const timerDisplay = document.getElementById('timerDisplay');
-            const countdownEl = document.getElementById('countdown');
-            timerDisplay.classList.remove('hidden');
-
-            timerInterval = setInterval(function () {
-                minutes = parseInt(timer / 60, 10);
-                seconds = parseInt(timer % 60, 10);
-
-                minutes = minutes < 10 ? "0" + minutes : minutes;
-                seconds = seconds < 10 ? "0" + seconds : seconds;
-
-                countdownEl.textContent = minutes + ":" + seconds;
-
-                if (--timer < 0) {
-                    clearInterval(timerInterval);
-                    document.getElementById('qrcode').innerHTML = '<span class="text-[11px] text-red-400 font-semibold">Expired!</span>';
-                    document.getElementById('centerLogo').classList.add('hidden');
-                    timerDisplay.classList.add('hidden');
-                    document.getElementById('shareBtn').classList.add('hidden');
-                    showFeedback("QR Expired due to security.", "error");
-                }
-            }, 1000);
-        }
-
-        async function shareFamilyQR() {
+        // Share QR Token
+        window.shareFamilyQR = async function() {
             if (!lastGeneratedToken) {
-                alert("Please generate QR first!");
+                alert("Please generate a secure QR first!");
                 return;
             }
 
             if (navigator.share) {
                 try {
                     await navigator.share({
-                        title: 'Family Protected Ledger Token',
-                        text: `My Family Protected Ledger secure token is: ${lastGeneratedToken}`
+                        title: 'Family Ledger Sync Token',
+                        text: `Use this secure token to link and sync my ledger account: ${lastGeneratedToken}`
                     });
                 } catch (err) {
-                    console.log('Sharing failed', err);
+                    console.log('Sharing canceled', err);
                 }
             } else {
-                navigator.clipboard.writeText(lastGeneratedToken);
-                alert("Token copied to clipboard!");
+                try {
+                    await navigator.clipboard.writeText(lastGeneratedToken);
+                    alert("Token copied to clipboard!");
+                } catch (err) {
+                    console.error('Clipboard failed', err);
+                }
             }
+        };
+
+        // Gallery File Selection & Cropper Initialization
+        window.scanImageFromFile = function(e) {
+            if (!e.target.files || e.target.files.length === 0) return;
+            const imageFile = e.target.files[0];
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const imgElement = document.getElementById('imageToCrop');
+                imgElement.src = event.target.result;
+                
+                document.getElementById('cropperModal').style.display = 'flex';
+
+                if (cropperInstance) {
+                    cropperInstance.destroy();
+                }
+
+                cropperInstance = new Cropper(imgElement, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    autoCropArea: 0.8,
+                    responsive: true
+                });
+            };
+            reader.readAsDataURL(imageFile);
+        };
+
+        // Close Cropper Modal
+        window.closeCropper = function() {
+            document.getElementById('cropperModal').style.display = 'none';
+            if (cropperInstance) {
+                cropperInstance.destroy();
+                cropperInstance = null;
+            }
+            document.getElementById('fileInput').value = '';
+        };
+
+        // Scan Cropped Image Area
+        window.performCroppedScan = function() {
+            if (!cropperInstance) return;
+
+            const croppedCanvas = cropperInstance.getCroppedCanvas({
+                width: 500,
+                height: 500,
+                fillColor: '#fff'
+            });
+
+            croppedCanvas.toBlob((blob) => {
+                closeCropper();
+                
+                const html5QrCodeFromFile = new Html5Qrcode("reader");
+                html5QrCodeFromFile.scanFile(blob, true)
+                    .then(decodedText => {
+                        handleScanSuccess(decodedText);
+                    })
+                    .catch(err => {
+                        playBeep(false);
+                        showFeedback("No valid QR code found in the cropped area!", "error");
+                    });
+            }, 'image/png');
+        };
+
+        // Handle Scan Success & Expiry Validation
+        function handleScanSuccess(text) {
+            if (typeof text !== 'string') return;
+
+            if (text.startsWith("LEDGER_SYNC_")) {
+                const parts = text.split("_");
+                if (parts.length >= 3) {
+                    const targetUserId = parts[2];
+                    const tokenTimestamp = parseInt(parts[3], 10);
+                    const timeDifference = (Date.now() - tokenTimestamp) / 1000;
+
+                    if (timeDifference > 120 || timeDifference < 0) {
+                        playBeep(false);
+                        showFeedback("Token Expired! Please request a new QR code.", "error");
+                        return;
+                    }
+
+                    if (navigator.vibrate) navigator.vibrate(200);
+                    playBeep(true);
+
+                    localStorage.setItem("linked_ledger_user_id", targetUserId);
+                    showFeedback("Account linked successfully! Loading data...", "success");
+
+                    window.restoreFromCloud(targetUserId).then(res => {
+                        if (res.success) {
+                            alert("Ledger account successfully synced to your device!");
+                            location.reload();
+                        } else {
+                            showFeedback("Failed to fetch data: " + res.message, "error");
+                        }
+                    });
+                    return;
+                }
+            }
+
+            playBeep(false);
+            showFeedback("Invalid QR code format!", "error");
         }
 
-        function startRealScanner() {
+        // Beep Audio Feedback
+        function playBeep(isSuccess) {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const audioCtx = new AudioContext();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.type = isSuccess ? 'sine' : 'sawtooth';
+                oscillator.frequency.setValueAtTime(isSuccess ? 880 : 300, audioCtx.currentTime);
+                
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + (isSuccess ? 0.15 : 0.3));
+            } catch (e) {}
+        }
+
+        // Real Camera Scanner Start
+        window.startRealScanner = function() {
             const placeholder = document.getElementById('scannerPlaceholder');
-            placeholder.style.display = 'none';
+            const spinner = document.getElementById('scannerLoading');
+            if (spinner) spinner.classList.remove('hidden');
+            if (placeholder) placeholder.style.display = 'none';
             
             if (!html5QrCode) {
                 html5QrCode = new Html5Qrcode("reader");
@@ -190,60 +343,38 @@
 
             html5QrCode.start(
                 { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 100, height: 100 } },
+                { fps: 10, qrbox: { width: 150, height: 150 } },
                 (decodedText) => {
+                    if (spinner) spinner.classList.add('hidden');
                     handleScanSuccess(decodedText);
                     stopRealScanner();
                 },
-                (errorMessage) => {}
+                () => {}
             ).catch((err) => {
-                showFeedback("Cannot open camera.", "error");
-                placeholder.style.display = 'flex';
+                if (spinner) spinner.classList.add('hidden');
+                showFeedback("Unable to open camera. Check permissions.", "error");
+                if (placeholder) placeholder.style.display = 'flex';
             });
-        }
+        };
 
-        function stopRealScanner() {
+        // Stop Camera Scanner
+        window.stopRealScanner = function() {
+            const spinner = document.getElementById('scannerLoading');
+            if (spinner) spinner.classList.add('hidden');
+
             if (html5QrCode && html5QrCode.isScanning) {
                 html5QrCode.stop().then(() => {
-                    document.getElementById('scannerPlaceholder').style.display = 'flex';
-                }).catch(err => console.log(err));
-            } else {
-                document.getElementById('scannerPlaceholder').style.display = 'flex';
+                    const placeholder = document.getElementById('scannerPlaceholder');
+                    if (placeholder) placeholder.style.display = 'flex';
+                }).catch(err => {});
             }
-        }
+        };
 
-        function scanImageFromFile(e) {
-            if (e.target.files.length === 0) return;
-            const imageFile = e.target.files[0];
-            
-            const html5QrCodeFromFile = new Html5Qrcode("reader");
-            html5QrCodeFromFile.scanFile(imageFile, true)
-                .then(decodedText => {
-                    handleScanSuccess(decodedText);
-                })
-                .catch(err => {
-                    showFeedback("No valid QR found in image!", "error");
-                });
-        }
-
-        function verifyManualToken() {
-            const token = document.getElementById('manualTokenInput').value.trim();
-            if (!token) {
-                showFeedback("Please type a token!", "error");
-                return;
-            }
-            handleScanSuccess(token);
-        }
-
-        function handleScanSuccess(text) {
-            const resDiv = document.getElementById('scanResult');
-            resDiv.classList.remove('hidden');
-            resDiv.textContent = "Success: " + text;
-            showFeedback("QR/Token Verification Successful!", "success");
-        }
-
+        // UI Feedback Message Handler
         function showFeedback(message, type) {
             const fb = document.getElementById('feedbackMsg');
+            if (!fb) return;
+            
             fb.classList.remove('hidden', 'bg-emerald-950', 'text-emerald-300', 'bg-red-950', 'text-red-300');
             if (type === 'success') {
                 fb.classList.add('bg-emerald-950', 'text-emerald-300');
