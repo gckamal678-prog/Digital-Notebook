@@ -80,24 +80,134 @@ tailwind.config = {
         0%, 100% { transform: translateY(0); filter: brightness(1); }
         50% { transform: translateY(-3px); filter: brightness(1.3); }
     }
+    @keyframes spinSlow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .animate-spin-slow {
+        animation: spinSlow 8s linear infinite;
+    }
+    @keyframes pulse-slow {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.1); opacity: 1; }
+    }
+    .animate-pulse-slow { animation: pulse-slow 2s infinite; }
+    #tour-card.active-card { opacity: 1; transform: scale(1); }
 </style>
 </head>
 <body id="main-body" class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 pb-20 md:pb-6 transition-colors duration-300 w-full m-0 text-xs">
 
-<!-- Welcome Splash Screen -->
-<div id="splash-screen" class="fixed inset-0 bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 z-50 flex flex-col items-center justify-center text-white transition-opacity duration-700">
-    <div class="text-center space-y-4">
+<!-- WELCOME SPLASH SCREEN -->
+<div id="splash-screen" class="fixed inset-0 bg-slate-950 z-50 flex flex-col items-center justify-center text-white transition-opacity duration-700 overflow-hidden select-none">
+    
+    <!-- Cyberpunk Digital Grid Background -->
+    <div class="absolute inset-0 bg-[linear-gradient(to_right,#065f4615_1px,transparent_1px),linear-gradient(to_bottom,#065f4615_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none"></div>
+
+    <!-- Floating Particles -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute w-2 h-2 bg-emerald-500/30 rounded-full top-1/4 left-1/3 animate-ping"></div>
+        <div class="absolute w-1.5 h-1.5 bg-teal-400/40 rounded-full top-2/3 right-1/4 animate-pulse"></div>
+    </div>
+
+    <div class="relative z-10 text-center space-y-6 max-w-sm px-6">
+        <!-- Logo with Scanning Ring Effect -->
         <div class="flex justify-center">
-            <div class="w-20 h-20 rounded-full bg-slate-900/80 border-2 border-indigo-500/40 p-2 shadow-2xl flex items-center justify-center backdrop-blur-md animate-bounce">
-                <img src="N1024.png" alt="Logo" class="w-full h-full object-cover rounded-full">
+            <div class="relative">
+                <div class="absolute -inset-1 rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 opacity-75 blur-sm animate-spin-slow"></div>
+                <div class="relative w-20 h-20 rounded-full bg-slate-900/90 border-2 border-emerald-500/60 p-2 shadow-2xl flex items-center justify-center backdrop-blur-md overflow-hidden">
+                    <img src="N1024.png" alt="Logo" class="w-full h-full object-cover rounded-full">
+                </div>
             </div>
         </div>
-        <div class="space-y-1">
-            <p class="text-indigo-400 text-[11px] font-semibold tracking-widest uppercase" data-i18n="welcome_text">Welcome to</p>
-            <h1 class="text-xl font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-indigo-200 via-sky-300 to-white animated-title" data-i18n="app_title">
-                DIGITAL NOTEBOOK
+
+        <!-- Titles with Typing Effect Target -->
+        <div class="space-y-2">
+            <p class="text-emerald-400 text-[11px] font-mono tracking-widest uppercase flex items-center justify-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                System Initializing...
+            </p>
+            <h1 id="typing-title" class="text-xl font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-emerald-300 via-teal-200 to-white font-mono h-8">
+                <!-- Text will be typed via JS -->
             </h1>
-            <p class="text-[10px] text-slate-400">Manage your finance securely</p>
+        </div>
+
+        <!-- Digital Progress Bar & Percentage -->
+        <div class="space-y-1.5 w-48 mx-auto">
+            <div class="flex justify-between text-[10px] font-mono text-emerald-400/80">
+                <span>LOADING</span>
+                <span id="load-percent">0%</span>
+            </div>
+            <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden p-[1px] border border-emerald-500/20">
+                <div id="progress-bar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-300 rounded-full transition-all duration-100" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <!-- Interactive Tap-to-Enter Button (Appears when loaded) -->
+        <div id="enter-container" class="pt-2 opacity-0 transition-opacity duration-500 pointer-events-none">
+            <button onclick="dismissSplash()" class="group relative px-6 py-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono tracking-wider transition-all duration-300 hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(16,185,129,0.15)] hover:shadow-[0_0_25px_rgba(16,185,129,0.3)]">
+                <span class="relative z-10 flex items-center gap-2">
+                    ACCESS NOTEBOOK 
+                    <svg class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                </span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= COMPLETE WELCOME & ONBOARDING SYSTEM ================= -->
+
+<!-- 1. LANGUAGE SELECTION MODAL (भाषा छनोट गर्ने पपअप) -->
+<div id="language-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center transition-opacity duration-300 hidden">
+    <div class="bg-slate-900 border border-emerald-500/40 rounded-2xl p-6 w-80 text-center shadow-2xl space-y-5 animate-zoom-in">
+        <div class="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/30 mx-auto flex items-center justify-center text-emerald-400">
+            🌐
+        </div>
+        <div class="space-y-1">
+            <h3 class="text-base font-bold text-white">Select Your Language</h3>
+            <p class="text-xs text-slate-400">तपाईंलाई मनपर्ने भाषा छान्नुहोस्</p>
+        </div>
+        <div class="grid grid-cols-2 gap-3 pt-2">
+            <button onclick="setLanguage('en')" class="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-emerald-500/20 border border-slate-700 hover:border-emerald-500 text-white text-xs font-mono transition-all">
+                English 🇬🇧
+            </button>
+            <button onclick="setLanguage('np')" class="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-emerald-500/20 border border-slate-700 hover:border-emerald-500 text-white text-xs font-mono transition-all">
+                नेपाली 🇳🇵
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 2. WELCOME TOAST / BANNER (भाषा छनोट भएपछि देखिने स्वागत सन्देश) -->
+<div id="welcome-toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 border border-emerald-500/50 text-white px-5 py-3 rounded-xl shadow-2xl backdrop-blur-md hidden transition-all duration-500 flex items-center gap-3">
+    <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold">✓</div>
+    <div>
+        <h4 id="welcome-title" class="text-xs font-bold text-emerald-300"></h4>
+        <p id="welcome-sub" class="text-[11px] text-slate-300"></p>
+    </div>
+</div>
+
+<!-- 3. ONBOARDING TOUR OVERLAY -->
+<div id="onboarding-overlay" class="fixed inset-0 z-40 bg-black/70 backdrop-blur-xs hidden transition-opacity duration-500">
+    <!-- Spotlight Box -->
+    <div id="spotlight-box" class="absolute transition-all duration-500 ease-in-out rounded-2xl ring-4 ring-emerald-500 ring-offset-4 ring-offset-slate-950 shadow-[0_0_30px_rgba(16,185,129,0.5)] pointer-events-none">
+        <div class="absolute -inset-2 rounded-full border border-emerald-500/30 animate-pulse-slow"></div>
+    </div>
+
+    <!-- Tour Popup Card -->
+    <div id="tour-card" class="absolute z-50 w-80 bg-slate-900 border border-emerald-500/30 rounded-xl p-5 text-white shadow-2xl transition-all duration-500 ease-in-out opacity-0 scale-95">
+        <div class="flex justify-between items-center mb-2">
+            <span id="tour-step-indicator" class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20"></span>
+            <button onclick="endTour()" id="skip-text" class="text-slate-400 hover:text-white text-xs font-mono transition-colors">Skip ✕</button>
+        </div>
+        
+        <div id="tour-content" class="transition-opacity duration-300 delay-100">
+            <h3 id="tour-title" class="text-sm font-bold text-emerald-300 mb-1"></h3>
+            <p id="tour-desc" class="text-xs text-slate-300 leading-relaxed mb-5"></p>
+        </div>
+
+        <div class="flex justify-between items-center border-t border-slate-800 pt-4">
+            <button id="prev-btn" onclick="prevStep()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed">Previous</button>
+            <button id="next-btn" onclick="nextStep()" class="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs font-mono transition-all duration-300 shadow-lg shadow-emerald-500/20">Next</button>
         </div>
     </div>
 </div>
@@ -192,7 +302,7 @@ tailwind.config = {
 
     <div class="flex-1 flex flex-col w-full">
         <!-- ================= HEADER SECTION ================= -->
-        <header class="sticky top-0 z-40 flex items-center justify-between px-5 py-3 bg-slate-900/95 backdrop-blur border-b border-slate-800 shadow-md gap-4">
+        <header id="top-controls-area" class="sticky top-0 z-40 flex items-center justify-between px-5 py-3 bg-slate-900/95 backdrop-blur border-b border-slate-800 shadow-md gap-4">
             <button id="sidebar-toggle-btn" onclick="toggleSidebar()" class="text-white text-lg focus:outline-none hover:text-indigo-400 transition">☰</button>
             <div class="text-center mx-auto">
                 <h1 class="text-sm md:text-base font-extrabold tracking-wider bg-gradient-to-r from-red-500 via-yellow-400 via-green-400 via-cyan-400 via-purple-500 to-pink-500 animate-rainbow bg-clip-text text-transparent letter-anim">
@@ -221,7 +331,7 @@ tailwind.config = {
                     <span class="text-indigo-500 text-sm">✨</span>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
+                <div id="summary-cards-area" class="grid grid-cols-2 gap-2">
                     <div class="dashboard-card bg-white dark:bg-slate-900 p-2.5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
                         <p class="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5" data-i18n="lbl_receivable">Receivable</p>
                         <h3 id="lbl-receivable" class="text-sm font-extrabold text-blue-600 dark:text-blue-400">Rs 0</h3>
@@ -248,7 +358,7 @@ tailwind.config = {
                     </div>
                 </div>
 
-                <div class="dashboard-card bg-white dark:bg-slate-900 p-2.5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                <div id="quick-action-area" class="dashboard-card bg-white dark:bg-slate-900 p-2.5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex justify-between items-center">
                     <div>
                         <p class="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5" data-i18n="lbl_savings">Total Savings & Investment</p>
                         <h3 id="lbl-savings" class="text-sm font-extrabold text-purple-600 dark:text-purple-400">Rs 0</h3>
@@ -415,7 +525,33 @@ tailwind.config = {
             lbl_income: "Total Income",
             lbl_savings: "Savings & Investment",
             chart_title: "Transaction Status",
-            incorrect_pin: "Incorrect PIN!"
+            incorrect_pin: "Incorrect PIN!",
+            welcomeTitle: "Welcome to Digital Notebook!",
+            welcomeSub: "Glad to have you here. Let's explore your dashboard.",
+            skip: "Skip ✕",
+            prev: "Previous",
+            next: "Next",
+            finish: "Finish",
+            steps: [
+                {
+                    targetSelector: '#top-controls-area',
+                    title: "Language & Theme Control",
+                    desc: "Choose your preferred language (EN/NP), toggle themes, and manage your profile controls here.",
+                    position: "bottom"
+                },
+                {
+                    targetSelector: '#summary-cards-area',
+                    title: "Dashboard Overview",
+                    desc: "Quickly view your total income, investments, and overall financial status at a glance.",
+                    position: "bottom"
+                },
+                {
+                    targetSelector: '#quick-action-area',
+                    title: "Quick Features",
+                    desc: "Access transactions, notes, calculator, and calendar instantly from this action grid.",
+                    position: "top"
+                }
+            ]
         },
         np: {
             welcome_text: "स्वागत छ",
@@ -433,13 +569,39 @@ tailwind.config = {
             lbl_income: "कुल आम्दानी",
             lbl_savings: "बचत तथा लगानी",
             chart_title: "ट्रान्जेक्सन स्थिति",
-            incorrect_pin: "गलत पिन!"
+            incorrect_pin: "गलत पिन!",
+            welcomeTitle: "Digital Notebook मा स्वागत छ!",
+            welcomeSub: "तपाईंलाई यहाँ स्वागत गर्न पाउँदा खुसी लाग्यो।",
+            skip: "छोड्नुहोस् ✕",
+            prev: "पछाडि",
+            next: "पछिल्लो",
+            finish: "सकियो",
+            steps: [
+                {
+                    targetSelector: '#top-controls-area',
+                    title: "भाषा र थिम कन्ट्रोल",
+                    desc: "तपाईंलाई मनपर्ने भाषा (EN/NP) छान्नुहोस्, थिम परिवर्तन गर्नुहोस् र प्रोफाइल कन्ट्रोल गर्नुहोस्।",
+                    position: "bottom"
+                },
+                {
+                    targetSelector: '#summary-cards-area',
+                    title: "ड्यासबोर्ड ओभरभ्यू",
+                    desc: "यहाँबाट तपाईं आफ्नो दैनिक आय, लगानी र हिसाबकिताबको सम्पूर्ण वित्तीय स्थिति एकै नजरमा हेर्न सक्नुहुन्छ।",
+                    position: "bottom"
+                },
+                {
+                    targetSelector: '#quick-action-area',
+                    title: "मुख्य फिचरहरू",
+                    desc: "तपाईंको ट्रान्जेक्सन, नोट, क्याल्कुलेटर र क्यालेन्डरजस्ता सबै मुख्य कार्यहरू यहाँबाट छिटो एक्सेस गर्न सक्नुहुन्छ।",
+                    position: "top"
+                }
+            ]
         }
     };
 
     function t(key) {
-        const lang = localStorage.getItem('language') || 'en';
-        return translations[lang][key] || translations['en'][key] || key;
+        const lang = localStorage.getItem('language') || localStorage.getItem('userLang') || 'en';
+        return translations[lang]?.[key] || translations['en'][key] || key;
     }
 
     function showToast(message) {
@@ -614,15 +776,174 @@ tailwind.config = {
         }
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => {
-            const splash = document.getElementById('splash-screen');
-            if(splash) {
-                splash.style.opacity = '0';
-                setTimeout(() => splash.remove(), 700);
+    // SPLASH & ONBOARDING LOGIC FLOW
+    let currentLang = 'np';
+    let currentStep = 0;
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const text = "DIGITAL NOTEBOOK";
+        const typingElement = document.getElementById("typing-title");
+        const progressBar = document.getElementById("progress-bar");
+        const loadPercent = document.getElementById("load-percent");
+        const enterContainer = document.getElementById("enter-container");
+
+        let i = 0;
+        function typeWriter() {
+            if (i < text.length) {
+                typingElement.textContent += text.charAt(i);
+                i++;
+                setTimeout(typeWriter, 70);
             }
-        }, 5000);
+        }
+
+        let progress = 0;
+        const loadingInterval = setInterval(() => {
+            progress += Math.floor(Math.random() * 8) + 3;
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(loadingInterval);
+                enterContainer.classList.remove('opacity-0', 'pointer-events-none');
+            }
+            progressBar.style.width = progress + '%';
+            loadPercent.textContent = progress + '%';
+        }, 50);
+
+        setTimeout(typeWriter, 200);
     });
+
+    function dismissSplash() {
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.remove();
+                checkAndTriggerOnboarding();
+            }, 700);
+        }
+    }
+
+    function checkAndTriggerOnboarding() {
+        if (!localStorage.getItem('hasSeenTour')) {
+            if (!localStorage.getItem('userLang')) {
+                document.getElementById('language-modal').classList.remove('hidden');
+            } else {
+                currentLang = localStorage.getItem('userLang');
+                showWelcomeMessage();
+            }
+        }
+    }
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        localStorage.setItem('userLang', lang);
+        localStorage.setItem('language', lang);
+        
+        const modal = document.getElementById('language-modal');
+        modal.style.opacity = '0';
+        setTimeout(() => modal.classList.add('hidden'), 300);
+
+        showWelcomeMessage();
+        applySettings();
+    }
+
+    function showWelcomeMessage() {
+        const tObj = translations[currentLang];
+        document.getElementById('welcome-title').textContent = tObj.welcomeTitle;
+        document.getElementById('welcome-sub').textContent = tObj.welcomeSub;
+
+        const toast = document.getElementById('welcome-toast');
+        toast.classList.remove('hidden');
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.style.removeProperty('opacity');
+                startTour();
+            }, 500);
+        }, 3000);
+    }
+
+    function startTour() {
+        const overlay = document.getElementById('onboarding-overlay');
+        overlay.classList.remove('hidden');
+        setTimeout(() => { overlay.style.opacity = '1'; }, 50);
+        
+        currentStep = 0;
+        showStep(currentStep);
+    }
+
+    function showStep(stepIndex) {
+        const tObj = translations[currentLang];
+        const step = tObj.steps[stepIndex];
+        const targetElement = document.querySelector(step.targetSelector);
+        
+        if (!targetElement) return;
+
+        const rect = targetElement.getBoundingClientRect();
+        const spotlight = document.getElementById('spotlight-box');
+        const card = document.getElementById('tour-card');
+        const content = document.getElementById('tour-content');
+
+        spotlight.style.top = `${rect.top - 8}px`;
+        spotlight.style.left = `${rect.left - 8}px`;
+        spotlight.style.width = `${rect.width + 16}px`;
+        spotlight.style.height = `${rect.height + 16}px`;
+
+        content.style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('tour-step-indicator').textContent = `Step ${stepIndex + 1} of ${tObj.steps.length}`;
+            document.getElementById('tour-title').textContent = step.title;
+            document.getElementById('tour-desc').textContent = step.desc;
+            document.getElementById('skip-text').textContent = tObj.skip;
+            document.getElementById('prev-btn').textContent = tObj.prev;
+            document.getElementById('next-btn').textContent = stepIndex === tObj.steps.length - 1 ? tObj.finish : tObj.next;
+            content.style.opacity = '1';
+        }, 200);
+
+        document.getElementById('prev-btn').disabled = stepIndex === 0;
+
+        card.classList.remove('active-card');
+        let cardTop = step.position === 'bottom' ? rect.bottom + 20 : rect.top - 210;
+        let cardLeft = Math.max(20, Math.min(window.innerWidth - 340, rect.left));
+        
+        if (cardTop + 220 > window.innerHeight) {
+            cardTop = window.innerHeight - 230;
+        }
+
+        card.style.top = `${cardTop}px`;
+        card.style.left = `${cardLeft}px`;
+
+        setTimeout(() => { card.classList.add('active-card'); }, 50);
+    }
+
+    function nextStep() {
+        const tObj = translations[currentLang];
+        if (currentStep < tObj.steps.length - 1) {
+            currentStep++;
+            showStep(currentStep);
+        } else {
+            endTour();
+        }
+    }
+
+    function prevStep() {
+        if (currentStep > 0) {
+            currentStep--;
+            showStep(currentStep);
+        }
+    }
+
+    function endTour() {
+        const overlay = document.getElementById('onboarding-overlay');
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+            overlay.style.removeProperty('opacity');
+        }, 500);
+        
+        localStorage.setItem('hasSeenTour', 'true');
+    }
 </script>
 </body>
 </html>
